@@ -1,0 +1,16 @@
+[package]
+name = "necrobridge"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+members = ["programs/*"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = 1

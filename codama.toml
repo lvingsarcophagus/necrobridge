@@ -1,0 +1,25 @@
+[generators]
+name = "necrobridge"
+version = "0.1.0"
+
+[clients]
+rust.outDir = "programs/necro_migrate/src/generated"
+typescript.outDir = "frontend/src/generated"
+javascript.outDir = "frontend/src/generated"
+
+[accounts]
+Migration = { docs = "Live protocol migration state" }
+UserClaim = { docs = "User claim record" }
+Governance = { docs = "Governance voting state" }
+
+[instructions]
+InitializeMigration = { docs = "Setup migration" }
+ClaimTokens = { docs = "User token claim" }
+InitializeGovernance = { docs = "Setup governance" }
+Vote = { docs = "Vote on proposal" }
+
+# Codama will generate:
+# - Typed instruction builders
+# - Account decoders
+# - Error handling code
+# - TypeScript client matching necrobridge.idl.ts

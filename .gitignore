@@ -1,0 +1,33 @@
+node_modules
+dist
+build
+.next
+target
+.anchor
+*.so
+
+# IDL
+target/idl
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Solana
+.cache
+.config
+
+# Logs
+*.log
+logs/

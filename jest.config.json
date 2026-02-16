@@ -1,0 +1,22 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "roots": ["<rootDir>/programs", "<rootDir>/tests"],
+  "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+  "moduleNameMapper": {
+    "^anchor-lang$": "<rootDir>/../node_modules/anchor-lang"
+  },
+  "collectCoverageFrom": [
+    "programs/**/*.ts",
+    "!programs/**/*.test.ts",
+    "!programs/**/node_modules/**"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 70,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    }
+  }
+}

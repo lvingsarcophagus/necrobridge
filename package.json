@@ -1,0 +1,17 @@
+{
+  "name": "necro_migrate-build",
+  "version": "0.1.0",
+  "description": "Build scripts for NecroBridge Anchor program deployment",
+  "scripts": {
+    "build": "bash programs/necro_migrate/build.sh",
+    "build:wsl": "programs/necro_migrate/build.bat",
+    "deploy:devnet": "bash scripts/deploy-devnet.sh",
+    "deploy:prepare": "bash scripts/prepare-deploy.sh",
+    "solana:config": "solana config set --url devnet",
+    "solana:airdrop": "solana airdrop 10",
+    "solana:balance": "solana balance"
+  },
+  "devDependencies": {
+    "@coral-xyz/anchor-cli": "^0.30.0"
+  }
+}

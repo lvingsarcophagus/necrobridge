@@ -1,0 +1,22 @@
+[build]
+shell = "bash"
+
+[features]
+seeds = false
+init-if-needed = true
+
+[programs.devnet]
+necro_migrate = "necr1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz1"
+
+[programs.localnet]
+necro_migrate = "necr1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz1"
+
+[programs.mainnet]
+necro_migrate = "necr1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz1"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "bash ./tests/run.sh"
