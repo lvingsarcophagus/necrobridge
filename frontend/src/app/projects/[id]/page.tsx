@@ -1,11 +1,13 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { MOCK_PROJECTS } from "@/lib/mock-data";
 import { VoteCard } from "@/components/VoteCard";
 import { MigrationStatus } from "@/components/MigrationStatus";
 import type { Project } from "@/components/ProjectCard";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 const STATUS_STYLES: Record<Project["status"], { bg: string; text: string; label: string }> = {
   nominated: { bg: "bg-warning/10", text: "text-warning", label: "Nominated" },
@@ -40,7 +42,97 @@ export default function ProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const project = MOCK_PROJECTS.find((p) => p.id === id);
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        // First check mock projects
+        const mockProject = MOCK_PROJECTS.find((p) => p.id === id);
+        if (mockProject) {
+          setProject(mockProject);
+          setLoading(false);
+          return;
+        }
+
+        // Then check nominations (by nomination ID or ticker)
+        const nominationsRef = collection(db, "nominations");
+        
+        // Try finding by ID first
+        const idQuery = query(nominationsRef, where("id", "==", id));
+        let snapshot = await getDocs(idQuery);
+        
+        // If not found by ID, try by ticker
+        if (snapshot.empty) {
+          const tickerQuery = query(nominationsRef, where("ticker", "==", id.toUpperCase()));
+          snapshot = await getDocs(tickerQuery);
+        }
+
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          
+          // Fetch vote tally
+          let status: Project["status"] = "nominated";
+          let votes = 0;
+          
+          try {
+            const voteResponse = await fetch(`/api/votes?projectId=${data.id}`);
+            if (voteResponse.ok) {
+              const voteData = await voteResponse.json();
+              const totalVotes = voteData.votes?.total || 0;
+              const yesVotes = voteData.votes?.yes || 0;
+              
+              votes = totalVotes;
+              
+              if (totalVotes > 0) {
+                const approvalPercentage = (yesVotes / totalVotes) * 100;
+                if (approvalPercentage >= 80) {
+                  status = "approved";
+                } else {
+                  status = "voting";
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching votes:", error);
+          }
+          
+          const projectData: Project = {
+            id: data.id,
+            name: data.projectName,
+            ticker: data.ticker,
+            sourceChain: data.sourceChain?.toString() || "unknown",
+            votes: votes,
+            status: status,
+            votesRequired: 100,
+            tvlLocked: "$0",
+            description: data.reason || "No description",
+          };
+          
+          setProject(projectData);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching project:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-700 rounded w-48 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-700 rounded w-96 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -61,7 +153,7 @@ export default function ProjectDetailPage({
 
   const status = STATUS_STYLES[project.status];
   const currentStep = getStepIndex(project.status);
-  const votePercent = Math.min(100, Math.round((project.votes / project.votesRequired) * 100));
+  const votePercent = Math.min(100, Math.round((project.votes / (project.votesRequired || 100)) * 100));
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">

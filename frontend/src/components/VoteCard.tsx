@@ -144,7 +144,7 @@ export function VoteCard({ projectId, projectName, ticker }: VoteCardProps) {
   const noPercent = 100 - yesPercent;
 
   return (
-    <div data-testid="vote-card" className="glass rounded-xl p-6 space-y-4">
+    <div data-testid="vote-card" className="rounded-xl border border-white/8 bg-gradient-to-br from-white/2 to-transparent backdrop-blur-sm p-6 space-y-4 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 hover:border-white/15 hover:bg-gradient-to-br hover:from-white/4 hover:to-white/1">
       <div>
         <h3 className="font-display text-lg font-semibold text-text-primary mb-1">
           {projectName} (${ticker})

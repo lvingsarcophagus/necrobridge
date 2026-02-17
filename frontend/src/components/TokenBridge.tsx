@@ -92,15 +92,15 @@ export function TokenBridge({
         <div className="mt-4 space-y-2 rounded-lg bg-white/5 p-4">
           <div className="flex justify-between text-sm">
             <span className="text-text-secondary">From Chain:</span>
-            <span className="text-white font-medium">{sourceChain}</span>
+            <span className="text-text-primary font-medium">{sourceChain}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-secondary">To Chain:</span>
-            <span className="text-white font-medium">Solana (Devnet)</span>
+            <span className="text-text-primary font-medium">Solana (Devnet)</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-text-secondary">Receiver:</span>
-            <span className="text-white font-mono text-xs">
+            <span className="text-text-primary font-mono text-xs">
               {publicKey
                 ? `${publicKey.toString().slice(0, 8)}...${publicKey
                     .toString()
@@ -111,7 +111,7 @@ export function TokenBridge({
           {sourceTokenAddress && (
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">Source Token:</span>
-              <span className="text-white font-mono text-xs">
+              <span className="text-text-primary font-mono text-xs">
                 {sourceTokenAddress.slice(0, 6)}...{sourceTokenAddress.slice(-4)}
               </span>
             </div>
@@ -148,7 +148,7 @@ export function TokenBridge({
 
       {/* Next Steps */}
       <div className="rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm p-6">
-        <h4 className="font-semibold text-white mb-3">After Bridge Completion:</h4>
+        <h4 className="font-semibold text-text-primary mb-3">After Bridge Completion:</h4>
         <ol className="space-y-2 text-sm text-text-secondary list-decimal list-inside">
           <li>Wait for Wormhole guardians to relay your transaction (~1-2 min)</li>
           <li>Your tokens are now canonical SPL on Solana</li>

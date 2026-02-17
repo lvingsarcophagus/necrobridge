@@ -22,7 +22,7 @@ export default function LeaderboardPage() {
           </div>
           <Link
             href="/projects"
-            className="px-6 py-3 rounded-lg bg-primary text-white hover:bg-primary/90 font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-primary/50"
+            className="px-6 py-3 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold transition-all duration-300"
           >
             Vote Now
           </Link>
@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
       {/* How It Works */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass rounded-lg p-6 border border-white/10">
-          <h3 className="font-semibold text-lg mb-4 text-white">🤔 What is this?</h3>
+          <h3 className="font-semibold text-lg mb-4 text-text-primary">🤔 What is this?</h3>
           <p className="text-sm text-text-secondary leading-relaxed">
             NecroBridge is a community-driven platform for resurrecting dead crypto protocols on Solana. 
             Projects are nominated, voted on by the community (using SOL), and if approved, migrated to 
@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
         </div>
 
         <div className="glass rounded-lg p-6 border border-white/10">
-          <h3 className="font-semibold text-lg mb-4 text-white">🎯 How to participate</h3>
+          <h3 className="font-semibold text-lg mb-4 text-text-primary">🎯 How to participate</h3>
           <ul className="text-sm text-text-secondary space-y-2">
             <li>✅ Connect your Solana wallet (Phantom or Solflare)</li>
             <li>✅ Vote YES or NO on nominated projects</li>
@@ -62,8 +62,8 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Featured Projects CTA */}
-      <div className="mt-12 glass rounded-lg p-8 border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent text-center">
-        <h3 className="font-display text-2xl font-bold mb-2 text-white">
+      <div className="mt-12 glass rounded-lg p-8 border border-white/10 bg-white/3 text-center">
+        <h3 className="font-display text-2xl font-bold mb-2 text-text-primary">
           Ready to resurrect? 🧟
         </h3>
         <p className="text-text-secondary mb-6">
@@ -71,7 +71,7 @@ export default function LeaderboardPage() {
         </p>
         <Link
           href="/projects"
-          className="inline-block px-8 py-3 rounded-lg bg-primary text-white hover:bg-primary/90 font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-primary/50"
+          className="inline-block px-8 py-3 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold transition-all duration-300"
         >
           Browse Projects →
         </Link>

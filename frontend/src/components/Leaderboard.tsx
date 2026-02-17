@@ -208,7 +208,7 @@ export function Leaderboard() {
                     <td className="px-4 py-4">
                       <Link
                         href={`/projects/${project.id}`}
-                        className="text-sm font-semibold text-white hover:text-primary transition-colors"
+                        className="text-sm font-semibold text-text-primary hover:text-white/80 transition-colors"
                       >
                         <div className="flex items-center gap-2">
                           <span>{project.name}</span>
@@ -226,7 +226,7 @@ export function Leaderboard() {
                     <td className="px-4 py-4">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 ${
-                          statusColor[project.status] || 'text-white'
+                          statusColor[project.status] || 'text-text-primary'
                         }`}
                       >
                         {project.status.charAt(0).toUpperCase() + project.status.slice(1)}

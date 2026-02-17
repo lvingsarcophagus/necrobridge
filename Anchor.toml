@@ -6,13 +6,13 @@ seeds = false
 init-if-needed = true
 
 [programs.devnet]
-necro_migrate = "necr1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz1"
+necro_migrate = "2z3U1Wwq7bgHnkEuD5Yfw97g8uGyimDyRafRar21Bsva"
 
 [programs.localnet]
-necro_migrate = "necr1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz1"
+necro_migrate = "2z3U1Wwq7bgHnkEuD5Yfw97g8uGyimDyRafRar21Bsva"
 
 [programs.mainnet]
-necro_migrate = "necr1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz1"
+necro_migrate = "2z3U1Wwq7bgHnkEuD5Yfw97g8uGyimDyRafRar21Bsva"
 
 [provider]
 cluster = "devnet"

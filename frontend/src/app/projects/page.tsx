@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ProjectCard } from "@/components/ProjectCard";
+import { MetaMaskConnector } from "@/components/MetaMaskConnector";
 import { MOCK_PROJECTS } from "@/lib/mock-data";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
@@ -24,50 +25,80 @@ export default function ProjectsPage() {
   const [sortBy, setSortBy] = useState<"votes" | "name">("votes");
   const [allProjects, setAllProjects] = useState<Project[]>([...MOCK_PROJECTS]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch nominations and merge with mock projects
-  useEffect(() => {
-    const fetchNominations = async () => {
-      try {
-        const nominationsRef = collection(db, "nominations");
-        const q = query(nominationsRef, orderBy("createdAt", "desc"));
+  // Fetch nominations function (extracted so it can be reused)
+  const fetchNominations = async () => {
+    try {
+      const nominationsRef = collection(db, "nominations");
+      const q = query(nominationsRef, orderBy("createdAt", "desc"));
+      
+      // Get nominations once
+      const snapshot = await getDocs(q);
+      const nominations: any[] = [];
+      
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
         
-        // Get nominations once
-        const snapshot = await getDocs(q);
-        const nominations: any[] = [];
+        // Fetch vote tally for this nomination
+        let status: Project["status"] = "nominated";
+        let votes = 0;
         
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          nominations.push({
-            id: data.ticker,
-            name: data.projectName,
-            ticker: data.ticker,
-            sourceChain: data.sourceChain,
-            votes: data.voteCount || 0,
-            status: "nominated" as const,
-            nominator: data.walletAddress,
-            contractAddress: data.contractAddress,
-            reason: data.reason,
-            website: data.website,
-          });
+        try {
+          const voteResponse = await fetch(`/api/votes?projectId=${data.id}`);
+          if (voteResponse.ok) {
+            const voteData = await voteResponse.json();
+            const totalVotes = voteData.votes?.total || 0;
+            const yesVotes = voteData.votes?.yes || 0;
+            
+            votes = totalVotes;
+            
+            if (totalVotes > 0) {
+              const approvalPercentage = (yesVotes / totalVotes) * 100;
+              if (approvalPercentage >= 80) {
+                status = "approved";
+              } else {
+                status = "voting";
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching votes for ${data.id}:`, error);
+        }
+        
+        nominations.push({
+          id: data.id || data.ticker,
+          name: data.projectName,
+          ticker: data.ticker,
+          sourceChain: data.sourceChain?.toString() || "unknown",
+          votes: votes,
+          status: status,
+          votesRequired: 100,
+          tvlLocked: "$0",
+          description: data.reason || "No description",
         });
-
-        // Combine mock projects with nominations (nominations take precedence by ticker)
-        const nominationTickers = new Set(nominations.map(n => n.ticker));
-        const combined = [
-          ...nominations,
-          ...MOCK_PROJECTS.filter(p => !nominationTickers.has(p.ticker))
-        ];
-
-        setAllProjects(combined);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching nominations:", error);
-        setAllProjects(MOCK_PROJECTS);
-        setLoading(false);
       }
-    };
 
+      // Combine mock projects with nominations (nominations take precedence by ticker)
+      const nominationTickers = new Set(nominations.map(n => n.ticker));
+      const combined = [
+        ...nominations,
+        ...MOCK_PROJECTS.filter(p => !nominationTickers.has(p.ticker))
+      ];
+
+      setAllProjects(combined);
+      setLoading(false);
+      setRefreshing(false);
+    } catch (error) {
+      console.error("Error fetching nominations:", error);
+      setAllProjects(MOCK_PROJECTS);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch nominations on mount
+  useEffect(() => {
     fetchNominations();
   }, []);
 
@@ -105,13 +136,42 @@ export default function ProjectsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">
+            Dead Projects
+          </h1>
+          <p className="text-text-secondary">
+            Browse community-nominated protocols eligible for migration to Solana
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setRefreshing(true);
+            fetchNominations();
+          }}
+          disabled={refreshing || loading}
+          className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm font-medium whitespace-nowrap"
+        >
+          {refreshing ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              Refreshing...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* MetaMask Connector Section */}
       <div className="mb-8">
-        <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">
-          Dead Projects
-        </h1>
-        <p className="text-text-secondary">
-          Browse community-nominated protocols eligible for migration to Solana
-        </p>
+        <MetaMaskConnector />
       </div>
 
       {/* Filters */}

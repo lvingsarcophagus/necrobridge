@@ -1,37 +1,37 @@
+'use client';
+
 /**
- * NecroBridge React Hooks - framework-kit patterns
- * Wallet + RPC integration using @solana/wallet-standard-react
+ * NecroBridge React Hooks - SDK integration
+ * Integrates with deployed NecroMigrate Anchor program
  */
 
 import { useCallback, useState } from "react";
-import {
-  createInitializeMigrationTransaction,
-  createClaimTokensTransaction,
-} from "../lib/necro-sdk-kit";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 
-export function useNecroMigration() {
+export function useNecrobridge() {
+  const { publicKey, sendTransaction, connected } = useWallet();
+  const { connection } = useConnection();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const initializeMigration = useCallback(
-    async (params: {
+    async (_params: {
+      mint: PublicKey;
       name: string;
       sourceChain: number;
-      sourceAddress: Uint8Array;
-      snapshotRoot: [number, ...number[]];
+      sourceAddress: number[];
+      snapshotRoot: number[];
       totalSupply: bigint;
-      splMint: any;
     }) => {
+      if (!publicKey || !connected) throw new Error("Wallet not connected");
+
       setLoading(true);
       setError(null);
 
       try {
-        // Placeholder: In production, build and send transaction
-        await createInitializeMigrationTransaction({
-          admin: {} as any,
-          ...params,
-        });
-        return "placeholder-signature";
+        // Placeholder - use buildInitializeMigrationTx from anchor-client
+        throw new Error("Function not implemented");
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         setError(message);
@@ -40,23 +40,25 @@ export function useNecroMigration() {
         setLoading(false);
       }
     },
-    []
+    [publicKey, connected, connection, sendTransaction]
   );
 
   const claimTokens = useCallback(
-    async (params: {
+    async (_params: {
+      migration: PublicKey;
+      mint: PublicKey;
       amount: bigint;
-      merkleProof: Uint8Array[];
+      merkleProof: number[][];
+      leafIndex: number;
     }) => {
+      if (!publicKey || !connected) throw new Error("Wallet not connected");
+
       setLoading(true);
       setError(null);
 
       try {
-        await createClaimTokensTransaction({
-          user: {} as any,
-          ...params,
-        });
-        return "placeholder-signature";
+        // Use buildClaimTokensTx from anchor-client
+        throw new Error("Function not implemented");
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         setError(message);
@@ -65,12 +67,34 @@ export function useNecroMigration() {
         setLoading(false);
       }
     },
-    []
+    [publicKey, connected, connection, sendTransaction]
+  );
+
+  const finalizeMigration = useCallback(
+    async (_params: { migration: PublicKey }) => {
+      if (!publicKey || !connected) throw new Error("Wallet not connected");
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Use buildFinalizeMigrationTx from anchor-client
+        throw new Error("Function not implemented");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [publicKey, connected, connection, sendTransaction]
   );
 
   return {
     initializeMigration,
     claimTokens,
+    finalizeMigration,
     loading,
     error,
   };

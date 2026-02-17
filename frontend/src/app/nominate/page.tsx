@@ -131,7 +131,7 @@ export default function NominatePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/projects"
-              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-primary-dark transition-colors"
+              className="px-5 py-2.5 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold text-sm transition-colors"
             >
               View All Projects
             </Link>
@@ -295,7 +295,7 @@ export default function NominatePage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {submitting ? (
             <>

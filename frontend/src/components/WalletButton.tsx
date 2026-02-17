@@ -10,41 +10,18 @@ export function WalletButton() {
     setMounted(true);
   }, []);
 
-  // Don't render until after hydration to prevent mismatch
   if (!mounted) {
     return (
-      <div className="wallet-adapter-button-container">
-        <button
-          disabled
-          className="px-4 py-2 rounded-lg bg-white text-black font-semibold text-sm opacity-50"
-        >
-          Loading...
-        </button>
-      </div>
+      <button
+        disabled
+        className="px-6 py-2 rounded-full border border-white/5 bg-white/[0.02] text-text-muted font-semibold text-[13px] opacity-50 h-[38px] flex items-center justify-center min-w-[140px]"
+      >
+        Connecting...
+      </button>
     );
   }
 
   return (
-    <div className="wallet-adapter-button-container">
-      <WalletMultiButton
-        style={{
-          background: '#ffffff',
-          backgroundColor: '#ffffff',
-          color: '#0a0a0a',
-          border: 'none',
-          borderRadius: '6px',
-          fontSize: '0.875rem',
-          fontWeight: '500',
-          padding: '10px 16px',
-          boxShadow: 'none',
-          outline: 'none',
-          height: 'auto',
-          minHeight: '40px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      />
-    </div>
+    <WalletMultiButton />
   );
 }

@@ -23,8 +23,8 @@ export function Navigation() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <span className="text-2xl">💀</span>
-            <span className="font-display text-lg font-bold text-white tracking-tight">
-              Necro<span className="text-white/80">Bridge</span>
+            <span className="font-display text-lg font-bold text-text-primary tracking-tight">
+              Necro<span className="text-text-secondary">Bridge</span>
             </span>
           </Link>
 
@@ -38,8 +38,8 @@ export function Navigation() {
                   href={link.href}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                     active
-                      ? "bg-white/20 text-white border border-white/30"
-                      : "text-text-secondary hover:text-white hover:bg-white/15"
+                      ? "bg-white/20 text-text-primary border border-white/30"
+                      : "text-text-secondary hover:text-text-primary hover:bg-white/15"
                   }`}
                 >
                   {link.label}
@@ -50,14 +50,14 @@ export function Navigation() {
 
           {/* Connect wallet placeholder */}
           <div className="hidden md:block">
-            <button className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 text-sm font-semibold hover:bg-white/30 hover:border-white/50 transition-all duration-300">
+            <button className="px-4 py-2 rounded-lg bg-white/20 text-text-primary border border-white/30 text-sm font-semibold hover:bg-white/30 hover:border-white/50 transition-all duration-300">
               Connect Wallet
             </button>
           </div>
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden p-2 text-text-secondary hover:text-white transition-colors"
+            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -84,15 +84,15 @@ export function Navigation() {
                 onClick={() => setMobileOpen(false)}
                 className={`block px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   active
-                    ? "bg-white/20 text-white border border-white/30"
-                    : "text-text-secondary hover:text-white hover:bg-white/15"
+                    ? "bg-white/20 text-text-primary border border-white/30"
+                    : "text-text-secondary hover:text-text-primary hover:bg-white/15"
                 }`}
               >
                 {link.label}
               </Link>
             );
           })}
-          <button className="w-full mt-2 px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 text-sm font-semibold hover:bg-white/30 transition-all duration-300">
+          <button className="w-full mt-2 px-4 py-2 rounded-lg bg-white/20 text-text-primary border border-white/30 text-sm font-semibold hover:bg-white/30 transition-all duration-300">
             Connect Wallet
           </button>
         </div>

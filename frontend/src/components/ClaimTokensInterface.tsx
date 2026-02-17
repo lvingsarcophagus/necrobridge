@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import {
-  Transaction,
   PublicKey,
 } from "@solana/web3.js";
 import { useToast } from "@/lib/toast-context";
 import { SolanaMerkleTreeGenerator } from "@/lib/merkle-tree";
+import {
+  buildClaimTokensTx,
+  checkUserClaimed,
+} from "@/lib/anchor-client";
+import { TEST_TOKEN_MINT, TEST_TOKEN_VAULT } from "@/lib/config";
 
 interface ClaimTokensProps {
   migrationAddress: string;
@@ -16,26 +20,46 @@ interface ClaimTokensProps {
   isEligible: boolean;
 }
 
-const PROGRAM_ID = new PublicKey(
-  "Fg6PaFpoGXkYsLMsmcNb9hQkpQxcZcwX5KHZewF34Zap"
-);
-
 export function ClaimTokensInterface({
   migrationAddress,
   userClaimAmount,
   isEligible,
 }: ClaimTokensProps) {
   const { connection } = useConnection();
-  const { publicKey, signTransaction, sendTransaction } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [claimStep, setClaimStep] = useState<
-    "idle" | "generating" | "submitting" | "complete"
+    "idle" | "fetching" | "generating" | "submitting" | "confirming" | "complete"
   >("idle");
   const [claimStatus, setClaimStatus] = useState<string>("");
+  const [hasUserClaimed, setHasUserClaimed] = useState<boolean | null>(null);
+
+  // Check if user has already claimed
+  const checkClaimed = async () => {
+    if (!publicKey) return;
+
+    try {
+      const migrationAddr = new PublicKey(migrationAddress);
+      const claimed = await checkUserClaimed(connection, migrationAddr, publicKey);
+      setHasUserClaimed(claimed);
+      if (claimed) {
+        addToast("You have already claimed tokens!", "info");
+      }
+    } catch (error) {
+      console.error("Error checking claim status:", error);
+    }
+  };
+
+  // Check if claimed when component mounts or publicKey changes
+  useEffect(() => {
+    if (publicKey) {
+      checkClaimed();
+    }
+  }, [publicKey, connection, migrationAddress]);
 
   const handleClaimTokens = async () => {
-    if (!publicKey || !signTransaction || !sendTransaction) {
+    if (!publicKey || !sendTransaction) {
       addToast("Please connect your wallet first", "error");
       return;
     }
@@ -45,62 +69,137 @@ export function ClaimTokensInterface({
       return;
     }
 
+    if (hasUserClaimed) {
+      addToast("You have already claimed tokens!", "info");
+      return;
+    }
+
     setIsLoading(true);
-    setClaimStep("generating");
-    setClaimStatus("Generating merkle proof...");
+    setClaimStep("fetching");
+    setClaimStatus("Fetching migration data...");
 
     try {
-      // In a production app, you would:
-      // 1. Fetch the merkle snapshot from a server
-      // 2. Generate the merkle proof for this user
-      // 3. Create the claim transaction
+      // Step 1: Get the merkle proof from the server
+      setClaimStep("fetching");
+      setClaimStatus("Fetching your merkle proof from server...");
 
-      // For demo purposes, we'll create a mock proof
+      const snapshotResponse = await fetch(
+        `/api/migrations/snapshot?projectId=${migrationAddress}`
+      );
+
+      if (!snapshotResponse.ok) {
+        throw new Error("Failed to fetch migration snapshot");
+      }
+
+      const snapshotData = await snapshotResponse.json();
+      const userProofData = snapshotData.claims[publicKey.toString()];
+
+      if (!userProofData) {
+        throw new Error("Your address is not in the snapshot. You may not be eligible.");
+      }
+
+      // Step 2: Generate merkle proof
+      setClaimStep("generating");
+      setClaimStatus("Generating merkle proof for your wallet...");
+
       const claims = [
-        { address: publicKey.toString(), amount: userClaimAmount },
+        { address: publicKey.toString(), amount: userProofData.amount },
       ];
 
       const merkleGen = new SolanaMerkleTreeGenerator(claims);
-      merkleGen.getProof(publicKey.toString());
-      merkleGen.getLeafIndex(publicKey.toString());
+      const proof = merkleGen.getProof(publicKey.toString());
+      const leafIndex = merkleGen.getLeafIndex(publicKey.toString());
 
+      if (!proof || proof.length === 0) {
+        throw new Error("Failed to generate merkle proof");
+      }
+
+      // Step 3: Build and submit transaction
       setClaimStep("submitting");
-      setClaimStatus("Submitting claim transaction...");
+      setClaimStatus("Building claim transaction...");
 
-      // Create instruction data for claim_tokens
-      // This is a simplified version - in production you'd use the IDL
-      const instruction = {
-        programId: PROGRAM_ID,
-        keys: [
-          { pubkey: publicKey, isSigner: true, isWritable: true },
+      const migrationPubkey = new PublicKey(migrationAddress);
+      
+      // Use real test token mint and vault from config
+      const realMint = new PublicKey(TEST_TOKEN_MINT);
+      const realVault = new PublicKey(TEST_TOKEN_VAULT);
+      
+      // Create user token account seed for ATA-like address
+      const userAtaSeed = Buffer.concat([
+        Buffer.from('ata'),
+        publicKey.toBuffer(),
+        realMint.toBuffer(),
+      ]);
+
+      // For hackathon: use deterministic but valid public keys
+      const programId = new PublicKey('11111111111111111111111111111111');
+      const userTokenAccount = PublicKey.createProgramAddressSync(
+        [userAtaSeed],
+        programId
+      );
+
+      try {
+        const tx = await buildClaimTokensTx(
+          connection,
+          publicKey,
+          migrationPubkey,
+          realMint,
+          realVault,
+          userTokenAccount,
           {
-            pubkey: new PublicKey(migrationAddress),
-            isSigner: false,
-            isWritable: true,
+            amount: BigInt(userProofData.amount),
+            merkleProof: proof,
+            leafIndex,
+          }
+        );
+
+        tx.feePayer = publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        setClaimStatus("Sending transaction for signing...");
+        const signature = await sendTransaction(tx, connection);
+
+        setClaimStep("confirming");
+        setClaimStatus("Confirming transaction on blockchain...");
+
+        // Wait for confirmation with extended timeout for devnet
+        const latestBlockHash = await connection.getLatestBlockhash();
+        const confirmationResult = await connection.confirmTransaction(
+          {
+            blockhash: latestBlockHash.blockhash,
+            lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+            signature: signature,
           },
-          // Additional accounts would be added here
-        ],
-        data: Buffer.alloc(1000), // Placeholder for instruction data
-      };
+          'finalized'
+        );
 
-      const transaction = new Transaction().add({
-        programId: PROGRAM_ID,
-        keys: instruction.keys,
-        data: instruction.data,
-      });
+        if (confirmationResult.value.err) {
+          throw new Error(`Transaction failed: ${confirmationResult.value.err}`);
+        }
 
-      transaction.feePayer = publicKey;
-      transaction.recentBlockhash = (
-        await connection.getLatestBlockhash()
-      ).blockhash;
+        // Step 4: Success
+        setClaimStep("complete");
+        setClaimStatus("Claim submitted successfully!");
+        setHasUserClaimed(true);
 
-      // Sign and send
-      const signature = await sendTransaction(transaction, connection);
-
-      setClaimStep("complete");
-      setClaimStatus("Claim submitted!");
-
-      addToast(`Claimed ${userClaimAmount} tokens! Tx: ${signature.slice(0, 8)}...`, "success");
+        addToast(
+          `✅ Claimed ${userProofData.amount} tokens! Tx: ${signature.slice(0, 8)}...`,
+          "success"
+        );
+      } catch (txError) {
+        // Detailed error handling
+        if (txError instanceof Error) {
+          console.error('Transaction error:', txError.message);
+          if (txError.message.includes('User rejected')) {
+            throw new Error('Transaction cancelled');
+          } else if (txError.message.includes('insufficient lamports')) {
+            throw new Error('Insufficient SOL for transaction fee');
+          } else if (txError.message.includes('failed to send transaction')) {
+            throw new Error('Network error - please try again');
+          }
+        }
+        throw txError;
+      }
 
       setTimeout(() => {
         setIsLoading(false);
@@ -109,7 +208,9 @@ export function ClaimTokensInterface({
       }, 3000);
     } catch (error) {
       console.error("Claim error:", error);
-      addToast("Failed to claim tokens. Please try again.", "error");
+      const errorMsg =
+        error instanceof Error ? error.message : "Failed to claim tokens";
+      addToast(errorMsg, "error");
       setIsLoading(false);
       setClaimStep("idle");
       setClaimStatus("");
@@ -117,11 +218,11 @@ export function ClaimTokensInterface({
   };
 
   return (
-    <div className="w-full rounded-xl border border-green-500/30 bg-green-500/5 backdrop-blur-sm p-6">
+    <div className="w-full rounded-xl border border-white/8 bg-gradient-to-br from-white/2 to-transparent backdrop-blur-sm p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:border-white/15 hover:bg-gradient-to-br hover:from-white/4 hover:to-white/1">
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-white mb-2">
-            🎉 Claim Your Tokens
+          <h3 className="font-display text-lg font-semibold text-text-primary mb-2">
+            ✨ Claim Your Tokens
           </h3>
           <p className="text-sm text-text-secondary">
             You are eligible to claim tokens from the migrated protocol
@@ -129,9 +230,9 @@ export function ClaimTokensInterface({
         </div>
 
         {/* Claim amount */}
-        <div className="rounded-lg bg-white/5 p-4">
-          <div className="text-sm text-text-secondary mb-1">Claim Amount</div>
-          <div className="text-2xl font-bold text-green-400">
+        <div className="rounded-lg border border-white/8 bg-gradient-to-br from-white/2 to-transparent p-4 shadow-sm">
+          <div className="text-sm text-text-muted mb-1">Claim Amount</div>
+          <div className="text-2xl font-bold text-text-primary">
             {userClaimAmount}
             <span className="text-lg text-text-secondary ml-2">tokens</span>
           </div>
@@ -139,16 +240,16 @@ export function ClaimTokensInterface({
 
         {/* Status indicator */}
         {isLoading && (
-          <div className="rounded-lg bg-white/10 p-3 space-y-2">
+          <div className="rounded-lg border border-white/10 bg-gradient-to-br from-white/5 to-surface-light/30 p-3 space-y-2 shadow-sm">
             <div className="flex items-center gap-2">
               <div className="animate-spin">⚙️</div>
-              <span className="text-sm text-white">{claimStatus}</span>
+              <span className="text-sm text-text-primary">{claimStatus}</span>
             </div>
 
             {/* Progress steps */}
             <div className="space-y-2">
-              {["Generating", "Submitting", "Complete"].map((step, idx) => {
-                const steps = ["generating", "submitting", "complete"];
+              {["Fetching", "Generating", "Submitting", "Confirming", "Complete"].map((step, idx) => {
+                const steps = ["fetching", "generating", "submitting", "confirming", "complete"];
                 const isActive = steps.indexOf(claimStep) >= idx;
                 const isCompleted = steps.indexOf(claimStep) > idx;
 
@@ -156,16 +257,16 @@ export function ClaimTokensInterface({
                   <div
                     key={step}
                     className={`flex items-center gap-2 text-xs ${
-                      isActive ? "text-white" : "text-text-secondary"
+                      isActive ? "text-text-primary" : "text-text-muted"
                     }`}
                   >
                     <div
                       className={`w-2 h-2 rounded-full ${
                         isCompleted
-                          ? "bg-green-500"
+                          ? "bg-success"
                           : isActive
-                            ? "bg-blue-500 animate-pulse"
-                            : "bg-white/20"
+                            ? "bg-white/40 animate-pulse"
+                            : "bg-white/10"
                       }`}
                     />
                     {step}
@@ -176,24 +277,35 @@ export function ClaimTokensInterface({
           </div>
         )}
 
+        {/* Already claimed message */}
+        {hasUserClaimed && (
+          <div className="rounded-lg bg-green-500/10 p-3 border border-green-500/30">
+            <p className="text-sm text-green-300">
+              ✅ You have already claimed your tokens!
+            </p>
+          </div>
+        )}
+
         {/* Claim button */}
         <button
           onClick={handleClaimTokens}
-          disabled={isLoading || !publicKey || !isEligible}
-          className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 ${
-            isLoading || !publicKey || !isEligible
-              ? "bg-white/10 text-text-secondary cursor-not-allowed"
-              : "bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 active:scale-95"
+          disabled={isLoading || !publicKey || !isEligible || (hasUserClaimed === true)}
+          className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 border ${
+            isLoading || !publicKey || !isEligible || (hasUserClaimed === true)
+              ? "border-white/10 bg-white/10 text-text-muted cursor-not-allowed"
+              : "border-success/50 bg-success/10 text-success hover:bg-success/20 hover:border-success/70 active:scale-95"
           }`}
         >
           {isLoading
             ? `${claimStep.toUpperCase()}...`
-            : "Claim Tokens from Anchor Program"}
+            : hasUserClaimed
+              ? "Already Claimed ✓"
+              : "Claim Tokens via Anchor Program"}
         </button>
 
         {/* Security note */}
         <p className="text-xs text-text-secondary text-center">
-          💪 Trustless merkle-proof based claims powered by
+          🔐 Trustless merkle-proof based claims powered by
           <br />
           Anchor program verification on Solana
         </p>

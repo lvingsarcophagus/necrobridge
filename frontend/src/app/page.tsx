@@ -15,8 +15,8 @@ function HeroSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-3xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm text-white mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm text-text-primary mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-text-primary animate-pulse" />
             Solana Graveyard Hackathon 2026
           </div>
 
@@ -37,13 +37,13 @@ function HeroSection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/projects"
-              className="w-full sm:w-auto px-6 py-3 rounded-lg bg-white/20 text-white font-semibold hover:bg-white/30 border border-white/30 hover:border-white/50 transition-all duration-300 text-center"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 transition-all duration-300 text-center font-semibold"
             >
               Browse Dead Projects
             </Link>
             <Link
               href="/nominate"
-              className="w-full sm:w-auto px-6 py-3 rounded-lg border border-white/30 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300 text-center font-semibold"
+              className="w-full sm:w-auto px-6 py-3 rounded-lg border border-white/20 text-text-primary hover:bg-white/10 hover:border-white/30 transition-all duration-300 text-center font-semibold"
             >
               Nominate a Project
             </Link>
@@ -119,7 +119,7 @@ function HowItWorksSection() {
               <span className="absolute top-4 right-4 font-mono text-xs text-text-muted">
                 {step.num}
               </span>
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
+              <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center text-text-primary mb-4">
                 {step.icon}
               </div>
               <h3 className="font-display font-semibold text-lg mb-2">
@@ -282,13 +282,13 @@ function CTASection() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/nominate"
-                className="w-full sm:w-auto px-6 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors"
+                className="w-full sm:w-auto px-6 py-3 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold transition-colors"
               >
                 Nominate a Project
               </Link>
               <Link
                 href="/projects"
-                className="w-full sm:w-auto px-6 py-3 rounded-lg border border-surface-border text-text-secondary hover:text-text-primary hover:border-primary/30 transition-colors"
+                className="w-full sm:w-auto px-6 py-3 rounded-lg border border-white/20 text-text-primary hover:text-text-primary hover:bg-white/5 transition-colors"
               >
                 Explore Graveyard
               </Link>

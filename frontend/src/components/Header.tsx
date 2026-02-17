@@ -1,122 +1,113 @@
 'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
 import { WalletButton } from '@/components/WalletButton';
 
 export function Header() {
-	const [open, setOpen] = React.useState(false);
-	const scrolled = useScroll(10);
+  const [open, setOpen] = React.useState(false);
+  const scrolled = useScroll(20);
 
-	const links = [
-		{
-			label: 'Browse Projects',
-			href: '/projects',
-		},
-		{
-			label: 'Nominate',
-			href: '/nominate',
-		},
-		{
-			label: 'Dashboard',
-			href: '/dashboard',
-		},
-	];
+  const links = [
+    { label: 'Browse Projects', href: '/projects' },
+    { label: 'Nominate', href: '/nominate' },
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Leaderboard', href: '/leaderboard' },
+    { label: 'Docs', href: '/docs' },
+  ];
 
-	React.useEffect(() => {
-		if (open) {
-			// Disable scroll
-			document.body.style.overflow = 'hidden';
-		} else {
-			// Re-enable scroll
-			document.body.style.overflow = '';
-		}
+  React.useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [open]);
 
-		// Cleanup when component unmounts (important for Next.js)
-		return () => {
-			document.body.style.overflow = '';
-		};
-	}, [open]);
+  return (
+    <header className={cn(
+      'fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-500 ease-in-out px-4',
+      scrolled ? 'py-3' : 'py-5 md:py-6'
+    )}>
+      <nav
+        className={cn(
+          'w-full max-w-4xl h-16 flex items-center justify-between px-6 rounded-full border transition-all duration-500 ease-in-out transform-gpu',
+          scrolled 
+            ? 'bg-surface/80 border-white/10 backdrop-blur-xl shadow-2xl scale-[0.96] translate-y-0' 
+            : 'bg-white/[0.02] border-white/10 backdrop-blur-md scale-100 translate-y-1'
+        )}
+      >
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2 group">
+          <span className="text-xl group-hover:scale-110 transition-transform duration-300">💀</span>
+          <span className="font-display text-base font-bold text-text-primary tracking-tight">
+            Necro<span className="text-text-secondary group-hover:text-text-primary transition-colors duration-300">Bridge</span>
+          </span>
+        </Link>
 
-	return (
-		<header
-			className={cn(
-				'sticky top-0 z-50 mx-auto w-full max-w-5xl border-b border-transparent md:rounded-md md:border md:transition-all md:ease-out',
-				{
-					'bg-background/95 supports-[backdrop-filter]:bg-white/5 border-white/10 backdrop-blur-lg md:top-4 md:max-w-4xl md:shadow':
-						scrolled && !open,
-					'bg-background/90': open,
-				},
-			)}
-		>
-			<nav
-				className={cn(
-					'flex h-14 w-full items-center justify-between px-4 md:h-12 md:transition-all md:ease-out',
-					{
-						'md:px-2': scrolled,
-					},
-				)}
-			>
-				<Link href="/" className="flex items-center gap-2 flex-shrink-0">
-					<span className="text-2xl">💀</span>
-					<span className="font-display text-lg font-bold text-white tracking-tight">
-						Necro<span className="text-white/80">Bridge</span>
-					</span>
-				</Link>
-				<div className="hidden items-center gap-4 md:flex">
-					{links.map((link, i) => (
-						<Link key={i} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
-							{link.label}
-						</Link>
-					))}
-					<div className="h-6 w-px bg-white/20" />
-					<div className="flex items-center gap-2">
-						<WalletButton />
-						<Button className="action-button">Get Started</Button>
-					</div>
-				</div>
-				<Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
-					<MenuToggleIcon open={open} className="size-5" duration={300} />
-				</Button>
-			</nav>
+        {/* Desktop Links */}
+        <div className="hidden md:flex items-center gap-0.5">
+          {links.map((link, i) => (
+            <Link 
+              key={i} 
+              href={link.href}
+              className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-full transition-all duration-300"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="h-3 w-px bg-white/10 mx-2" />
+          <div className="flex items-center -mr-1">
+            <WalletButton />
+          </div>
+        </div>
 
-			<div
-				className={cn(
-					'bg-background/90 fixed top-14 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y md:hidden',
-					open ? 'block' : 'hidden',
-				)}
-			>
-				<div
-					data-slot={open ? 'open' : 'closed'}
-					className={cn(
-						'data-[slot=open]:animate-in data-[slot=open]:zoom-in-95 data-[slot=closed]:animate-out data-[slot=closed]:zoom-out-95 ease-out',
-						'flex h-full w-full flex-col justify-between gap-y-2 p-4',
-					)}
-				>
-					<div className="grid gap-y-2">
-						{links.map((link) => (
-							<Link
-								key={link.label}
-								className={buttonVariants({
-									variant: 'ghost',
-									className: 'justify-start',
-								})}
-								href={link.href}
-								onClick={() => setOpen(false)}
-							>
-								{link.label}
-							</Link>
-						))}
-					</div>
-					<div className="flex flex-col gap-2">
-					<WalletButton />
-						<Button className="w-full">Get Started</Button>
-					</div>
-				</div>
-			</div>
-		</header>
-	);
+        {/* Mobile Toggle */}
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          onClick={() => setOpen(!open)} 
+          className="md:hidden text-text-primary h-8 w-8 hover:bg-white/10 rounded-full"
+        >
+          <MenuToggleIcon open={open} className="size-4" />
+        </Button>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={cn(
+          'fixed inset-0 z-[60] bg-[#0a0a0a]/98 backdrop-blur-3xl md:hidden transition-all duration-500 ease-in-out transform flex flex-col items-center justify-center',
+          open ? 'translate-y-0 opacity-100' : 'translate-y-[-100%] opacity-0 pointer-events-none'
+        )}
+      >
+        {/* Close button - top right */}
+        <button 
+          onClick={() => setOpen(false)}
+          className="absolute top-6 right-6 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-text-muted hover:text-text-primary bg-white/5 transition-all duration-300 hover:bg-white/10"
+        >
+          ×
+        </button>
+        
+        <div className="flex flex-col items-center gap-8">
+          {links.map((link, i) => (
+            <Link 
+              key={i} 
+              href={link.href} 
+              onClick={() => setOpen(false)}
+              className="text-2xl font-bold text-text-primary hover:text-white hover:scale-110 transition-all duration-300"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="mt-4">
+            <WalletButton />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
 }

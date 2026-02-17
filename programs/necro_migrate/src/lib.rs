@@ -1,6 +1,6 @@
-declare_id!("Fg6PaFpoGXkYsLMsmcNb9hQkpQxcZcwX5KHZewF34Zap");
+declare_id!("2z3U1Wwq7bgHnkEuD5Yfw97g8uGyimDyRafRar21Bsva");
 
-pub mod instructions;
+// pub mod instructions; // Duplicate account structs - use definitions in lib.rs instead
 
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface, TokenAccount};
@@ -12,9 +12,9 @@ pub mod necro_migrate {
 
     pub fn initialize_migration(
         ctx: Context<InitializeMigration>,
-        name: String,
+        name: [u8; 64],
         source_chain: u16,
-        source_address: Vec<u8>,
+        source_address: [u8; 32],
         snapshot_root: [u8; 32],
         total_supply: u64,
     ) -> Result<()> {
@@ -29,7 +29,7 @@ pub mod necro_migrate {
         migration.migrated_amount = 0;
         migration.is_active = true;
         
-        msg!("Migration initialized for {}", migration.name);
+        msg!("Migration initialized");
         Ok(())
     }
 
@@ -47,22 +47,22 @@ pub mod necro_migrate {
         require!(!user_claim.is_claimed, ErrorCode::AlreadyClaimed);
 
         // Verify merkle proof
-        let leaf = solana_program::hash::hashv(&[
+        let leaf = anchor_lang::solana_program::hash::hashv(&[
             ctx.accounts.user.key().as_ref(),
             &amount.to_le_bytes(),
             &leaf_index.to_le_bytes(),
         ]);
 
-        let mut current_hash = leaf.0;
+        let mut current_hash = leaf.to_bytes();
         for proof_hash in merkle_proof {
             current_hash = if current_hash < proof_hash {
-                solana_program::hash::hashv(&[&current_hash, &proof_hash]).0
+                anchor_lang::solana_program::hash::hashv(&[&current_hash, &proof_hash]).to_bytes()
             } else {
-                solana_program::hash::hashv(&[&proof_hash, &current_hash]).0
+                anchor_lang::solana_program::hash::hashv(&[&proof_hash, &current_hash]).to_bytes()
             };
         }
 
-        require_keys_eq!(current_hash, migration.snapshot_root, ErrorCode::InvalidMerkleProof);
+        require!(current_hash == migration.snapshot_root, ErrorCode::InvalidMerkleProof);
 
         // Mark as claimed
         user_claim.user = ctx.accounts.user.key();
@@ -106,7 +106,7 @@ pub mod necro_migrate {
 }
 
 #[derive(Accounts)]
-#[instruction(name: String, source_chain: u16, source_address: Vec<u8>, snapshot_root: [u8; 32], total_supply: u64)]
+#[instruction(name: [u8; 64], source_chain: u16, source_address: [u8; 32], snapshot_root: [u8; 32], total_supply: u64)]
 pub struct InitializeMigration<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -114,7 +114,7 @@ pub struct InitializeMigration<'info> {
     #[account(
         init,
         payer = admin,
-        space = size_of::<Migration>() + 100,
+        space = 8 + size_of::<Migration>(),
         seeds = [b"migration", admin.key().as_ref(), &source_chain.to_le_bytes()],
         bump
     )]
@@ -152,7 +152,7 @@ pub struct ClaimTokens<'info> {
     #[account(
         init,
         payer = user,
-        space = size_of::<UserClaim>() + 8,
+        space = 8 + size_of::<UserClaim>(),
         seeds = [b"claim", migration.key().as_ref(), user.key().as_ref()],
         bump
     )]
@@ -184,10 +184,10 @@ pub struct FinalizeMigration<'info> {
 
 #[account]
 pub struct Migration {
-    pub name: String,           // 4 + name length
+    pub name: [u8; 64],         // 64 (fixed size)
     pub admin: Pubkey,          // 32
     pub source_chain: u16,      // 2
-    pub source_address: Vec<u8>, // 4 + length
+    pub source_address: [u8; 32], // 32 (fixed size)
     pub snapshot_root: [u8; 32], // 32
     pub total_supply: u64,      // 8
     pub migrated_amount: u64,   // 8

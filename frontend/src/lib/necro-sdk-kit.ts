@@ -7,8 +7,9 @@
 export type Address = string;
 export type TransactionSigner = any;
 
-// Program address
-export const NECRO_PROGRAM_ID = "Fg6PaFpoGXkYsLMsmcNb9hQkpQxcZcwX5KHZewF34Zap" as Address;
+// Program address - imported from config
+import { NECROBRIDGE_PROGRAM_ID } from './config';
+export const NECRO_PROGRAM_ID = NECROBRIDGE_PROGRAM_ID as Address;
 
 /**
  * Initialize a new migration
