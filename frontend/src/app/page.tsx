@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProjectCard } from "@/components/ProjectCard";
 import { StatsCard } from "@/components/StatsCard";
+import { MigrationPathsSection } from "@/components/MigrationPathsSection";
 import { MOCK_PROJECTS, PLATFORM_STATS } from "@/lib/mock-data";
 
 function HeroSection() {
@@ -306,6 +307,7 @@ export default function HomePage() {
       <HeroSection />
       <StatsSection />
       <HowItWorksSection />
+      <MigrationPathsSection />
       <FeaturedProjectsSection />
       <TechStackSection />
       <CTASection />

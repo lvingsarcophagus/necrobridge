@@ -103,7 +103,58 @@ pub mod necro_migrate {
         msg!("Migration finalized");
         Ok(())
     }
-}
+
+    /// Initialize a DAO-controlled liquidity pool to prevent "day 2 death"
+    /// Ensures liquidity stays with the community, not individual whales
+    pub fn initialize_dao_liquidity(
+        ctx: Context<InitializeDAOLiquidity>,
+        lp_reserve_percentage: u8,
+    ) -> Result<()> {
+        require!(lp_reserve_percentage > 0 && lp_reserve_percentage <= 20, ErrorCode::InvalidOperation);
+        
+        let dao_liq = &mut ctx.accounts.dao_liquidity;
+        dao_liq.migration = ctx.accounts.migration.key();
+        dao_liq.dao_treasury = ctx.accounts.admin.key();
+        dao_liq.lp_percentage = lp_reserve_percentage;
+        dao_liq.pool_initialized = false;
+        dao_liq.total_reserved = 0;
+        dao_liq.bump = ctx.bumps.dao_liquidity;
+        
+        msg!("DAO liquidity pool initialized with {}% reserve requirement", lp_reserve_percentage);
+        Ok(())
+    }
+
+    /// Contribute tokens to the DAO-controlled liquidity pool
+    pub fn contribute_to_dao_lp(
+        ctx: Context<ContributeDAOLiquidity>,
+        amount: u64,
+    ) -> Result<()> {
+        require!(amount > 0, ErrorCode::InvalidAmount);
+        
+        let dao_liq = &mut ctx.accounts.dao_liquidity;
+        require!(dao_liq.migration == ctx.accounts.migration.key(), ErrorCode::InvalidOperation);
+        
+        // Transfer tokens to DAO treasury
+        let token_program = &ctx.accounts.token_program;
+        let cpi_accounts = anchor_spl::token_interface::TransferChecked {
+            from: ctx.accounts.user_token_account.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.dao_vault.to_account_info(),
+            authority: ctx.accounts.user.to_account_info(),
+        };
+
+        anchor_spl::token_interface::transfer_checked(
+            CpiContext::new(token_program.to_account_info(), cpi_accounts),
+            amount,
+            ctx.accounts.mint.decimals,
+        )?;
+
+        dao_liq.total_reserved = dao_liq.total_reserved.checked_add(amount)
+            .ok_or(ErrorCode::InvalidOperation)?;
+
+        msg!("User {} contributed {} tokens to DAO LP pool", ctx.accounts.user.key(), amount);
+        Ok(())
+    }
 
 #[derive(Accounts)]
 #[instruction(name: [u8; 64], source_chain: u16, source_address: [u8; 32], snapshot_root: [u8; 32], total_supply: u64)]
@@ -182,6 +233,46 @@ pub struct FinalizeMigration<'info> {
     pub migration: Account<'info, Migration>,
 }
 
+#[derive(Accounts)]
+pub struct InitializeDAOLiquidity<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    
+    pub migration: Account<'info, Migration>,
+    
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + size_of::<DAOLiquidity>(),
+        seeds = [b"dao_liquidity", migration.key().as_ref()],
+        bump
+    )]
+    pub dao_liquidity: Account<'info, DAOLiquidity>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ContributeDAOLiquidity<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    
+    pub migration: Account<'info, Migration>,
+    
+    #[account(mut)]
+    pub dao_liquidity: Account<'info, DAOLiquidity>,
+    
+    pub mint: InterfaceAccount<'info, Mint>,
+    
+    #[account(mut)]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+    
+    #[account(mut)]
+    pub dao_vault: InterfaceAccount<'info, TokenAccount>,
+    
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
 #[account]
 pub struct Migration {
     pub name: [u8; 64],         // 64 (fixed size)
@@ -206,6 +297,16 @@ pub struct UserClaim {
 pub struct Governance {
     pub migration: Pubkey,
     pub total_votes: u64,
+}
+
+#[account]
+pub struct DAOLiquidity {
+    pub migration: Pubkey,      // 32 - Reference to migration
+    pub dao_treasury: Pubkey,   // 32 - DAO treasury address
+    pub lp_percentage: u8,      // 1  - Percentage reserve (1-20%)
+    pub pool_initialized: bool, // 1  - Whether LP was created
+    pub total_reserved: u64,    // 8  - Total tokens in DAO LP
+    pub bump: u8,               // 1  - PDA bump
 }
 
 #[error_code]

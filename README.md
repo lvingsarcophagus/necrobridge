@@ -4,6 +4,7 @@
 
 > 🎯 **Hackathon Submission?** See [SUBMISSION.md](./SUBMISSION.md) for complete feature checklist & demo guide.
 > 🧪 **Devnet Testing?** See [DEVNET_SETUP.md](./DEVNET_SETUP.md) for test token & data setup.
+> 🛡️ **Risk Mitigations?** See [RISK_MITIGATIONS.md](./RISK_MITIGATIONS.md) for security & architecture details.
 > 🌐 **Sepolia Testnet Token?** See [dummy-erc20/DEPLOYMENT_COMPLETE.md](./dummy-erc20/DEPLOYMENT_COMPLETE.md) – ZOMB token deployed at `0x5ef2539ae4555FeC2e6831485097b78d15Fa5e4d`
 
 ---
@@ -226,7 +227,7 @@ Step 4: Mint SPL Tokens
 
 ---
 
-## 📁 Project Structure (Updated Feb 14 - Next.js 16 + Tailwind v4)
+## � Project Structure (Updated Feb 14 - Next.js 16 + Tailwind v4)
 
 ```
 necrobridge/

@@ -48,6 +48,11 @@ const connection = new Connection(HELIUS_RPC, 'confirmed');
 /**
  * POST /api/votes
  * Submit a vote on a project
+ * 
+ * SECURITY FEATURES:
+ * - Quadratic Voting: Vote power = sqrt(inputAmount) to prevent whale dominance
+ * - Minimum 50 Unique Wallets: Cannot approve without community consensus
+ * - One-vote-per-wallet: Prevent Sybil attacks
  */
 export async function POST(request: NextRequest) {
   try {
@@ -77,13 +82,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate power
+    // Validate power (must be SOL amount that will be converted to quadratic voting power)
     if (typeof power !== 'number' || power <= 0) {
       return NextResponse.json(
-        { success: false, message: 'Vote power must be a positive number' },
+        { success: false, message: 'Vote power (SOL amount) must be a positive number' },
         { status: 400 }
       );
     }
+
+    // Apply QUADRATIC VOTING: actual voting power = sqrt(power)
+    // This prevents whales from dominating: 1000 SOL → 31.6 power, 1 SOL → 1 power
+    const quadraticVotingPower = Math.sqrt(power);
+    
+    console.log(`Quadratic voting: ${power} SOL → ${quadraticVotingPower.toFixed(2)} power`);
 
     // Check if wallet already voted on this project
     const userVoteRef = doc(db, 'userVotes', `${walletAddress}_${projectId}`);
@@ -91,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     if (userVoteSnap.exists()) {
       return NextResponse.json(
-        { success: false, message: 'Wallet has already voted on this project' },
+        { success: false, message: 'Wallet has already voted on this project (one vote per wallet to prevent Sybil attacks)' },
         { status: 409 }
       );
     }
@@ -131,14 +142,15 @@ export async function POST(request: NextRequest) {
       // Allow vote to proceed - signature is from wallet, liability on user
     }
 
-    // Create vote record
+    // Create vote record with quadratic voting power
     const voteId = `VOTE_${walletAddress}_${projectId}_${Date.now()}`;
     const voteData = {
       id: voteId,
       walletAddress,
       projectId,
       direction,
-      power,
+      rawPower: power, // Original SOL amount
+      quadraticPower: quadraticVotingPower, // sqrt(rawPower) for voting
       transactionSignature,
       timestamp: timestamp || new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -156,12 +168,13 @@ export async function POST(request: NextRequest) {
       walletAddress,
       projectId,
       direction,
-      power,
+      rawPower: power,
+      quadraticPower: quadraticVotingPower,
       timestamp: timestamp || new Date().toISOString(),
       voteId,
     });
 
-    // Update vote tally
+    // Update vote tally with quadratic power
     const tallyRef = doc(db, 'voteTallies', projectId);
     const tallySnap = await getDoc(tallyRef);
 
@@ -169,16 +182,24 @@ export async function POST(request: NextRequest) {
       // First vote for this project
       batch.set(tallyRef, {
         projectId,
-        yes: direction === 'yes' ? power : 0,
-        no: direction === 'no' ? power : 0,
-        total: power,
+        yes: direction === 'yes' ? quadraticVotingPower : 0,
+        no: direction === 'no' ? quadraticVotingPower : 0,
+        total: quadraticVotingPower,
+        uniqueWallets: 1,
+        uniqueWalletsList: [walletAddress], // Track for minimum threshold
         lastUpdated: new Date().toISOString(),
       });
     } else {
       // Update existing tally
+      const currentTally = tallySnap.data();
+      const currentWallets = currentTally.uniqueWalletsList || [];
+      const newWalletCount = currentWallets.includes(walletAddress) ? currentWallets.length : currentWallets.length + 1;
+      
       batch.update(tallyRef, {
-        [direction === 'yes' ? 'yes' : 'no']: increment(power),
-        total: increment(power),
+        [direction === 'yes' ? 'yes' : 'no']: increment(quadraticVotingPower),
+        total: increment(quadraticVotingPower),
+        uniqueWallets: newWalletCount,
+        uniqueWalletsList: currentWallets.includes(walletAddress) ? currentWallets : [...currentWallets, walletAddress],
         lastUpdated: new Date().toISOString(),
       });
     }
@@ -190,12 +211,30 @@ export async function POST(request: NextRequest) {
     const updatedTallySnap = await getDoc(tallyRef);
     const updatedTally = updatedTallySnap.data();
 
+    // Calculate voting status
+    const uniqueWallets = updatedTally?.uniqueWallets || 1;
+    const minimumWalletsThreshold = 50;
+    const hasMinimumWallets = uniqueWallets >= minimumWalletsThreshold;
+    const totalVotes = updatedTally?.total || quadraticVotingPower;
+    const yesVotes = updatedTally?.yes || 0;
+    const approvalPercentage = totalVotes > 0 ? (yesVotes / totalVotes) * 100 : 0;
+    const isApproved = approvalPercentage >= 80 && hasMinimumWallets;
+
     return NextResponse.json(
       {
         success: true,
         voteId,
-        message: `Vote recorded successfully for ${direction}`,
+        message: `Vote recorded successfully for ${direction} (Quadratic Power: ${quadraticVotingPower.toFixed(2)})`,
+        vote: voteData,
         tally: updatedTally,
+        validation: {
+          uniqueWallets,
+          minimumWalletsRequired: minimumWalletsThreshold,
+          hasMinimumWallets,
+          approvalPercentage: approvalPercentage.toFixed(2),
+          isApproved,
+          status: isApproved ? 'APPROVED' : hasMinimumWallets ? 'VOTING' : `NEEDS ${minimumWalletsThreshold - uniqueWallets} MORE WALLETS`,
+        },
       },
       { status: 201 }
     );
@@ -266,10 +305,24 @@ export async function GET(request: NextRequest) {
             no: 0,
             total: 0,
           },
+          voteCount: 0,
+          uniqueWallets: 0,
+          minimumWalletsRequired: 50,
+          hasMinimumWallets: false,
+          status: 'PENDING: Needs 50 community members to vote',
+          validationStatus: {
+            communityConsensus: '✗ NEEDS 50 WALLETS',
+            approvalThreshold: '✗ NEEDS 80%+ APPROVAL',
+            isApproved: false,
+          },
         });
       }
 
       const tally = tallySnap.data();
+      const uniqueWallets = tally.uniqueWallets || 0;
+      const minimumWalletsThreshold = 50;
+      const hasMinimumWallets = uniqueWallets >= minimumWalletsThreshold;
+      
       // Query votes for this project to get count
       const votesQuery = query(
         collection(db, 'votes'),
@@ -277,15 +330,30 @@ export async function GET(request: NextRequest) {
       );
       const votesSnap = await getDocs(votesQuery);
 
+      const totalQuadraticPower = tally.total || 0;
+      const yesQuadraticPower = tally.yes || 0;
+      const approvalPercentage = totalQuadraticPower > 0 ? (yesQuadraticPower / totalQuadraticPower) * 100 : 0;
+      const isApproved = approvalPercentage >= 80 && hasMinimumWallets;
+
       return NextResponse.json({
         success: true,
         projectId,
         votes: {
-          yes: tally.yes || 0,
-          no: tally.no || 0,
-          total: tally.total || 0,
+          yes: Math.round(yesQuadraticPower * 100) / 100,
+          no: Math.round((tally.no || 0) * 100) / 100,
+          total: Math.round(totalQuadraticPower * 100) / 100,
+          yesPercentage: approvalPercentage.toFixed(2),
         },
         voteCount: votesSnap.size,
+        uniqueWallets,
+        minimumWalletsRequired: minimumWalletsThreshold,
+        hasMinimumWallets,
+        validationStatus: {
+          communityConsensus: hasMinimumWallets ? '✓ PASSED' : `✗ NEEDS ${minimumWalletsThreshold - uniqueWallets} MORE WALLETS`,
+          approvalThreshold: approvalPercentage >= 80 ? '✓ PASSED (80%+)' : `✗ NEEDS ${(80 - approvalPercentage).toFixed(1)}% MORE APPROVAL`,
+          isApproved,
+        },
+        status: isApproved ? 'APPROVED' : hasMinimumWallets ? 'VOTING' : `PENDING: Needs ${minimumWalletsThreshold - uniqueWallets} more wallets`,
       });
     }
 

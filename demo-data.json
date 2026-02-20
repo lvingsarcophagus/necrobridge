@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-02-19T12:43:26.812Z",
+  "network": "Ethereum Sepolia",
+  "tokenContract": "0x5ef2539ae4555FeC2e6831485097b78d15Fa5e4d",
+  "merkleRoot": "0x9153afbe2771542ad5d3b01c4cfafd24063b422a8cb619dd34676737d6d3dfeb",
+  "totalHolders": 3,
+  "totalSupply": 350.084021,
+  "holders": [
+    {
+      "address": "0x742d35Cc6634C0532925a3b844Bc0e7595f0bEb3",
+      "amountReadable": "100",
+      "notes": "Test wallet 1"
+    },
+    {
+      "address": "0x4a28562b5575048f957524B2E4DDE7167a7Aa563",
+      "amountReadable": "250",
+      "notes": "Test wallet 2"
+    },
+    {
+      "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "amountReadable": "0.084021",
+      "notes": "Test wallet 3"
+    }
+  ],
+  "notes": [
+    "Real Sepolia ZOMB token contract at 0x5ef2539ae4555FeC2e6831485097b78d15Fa5e4d",
+    "Test wallets have real holdings on Sepolia testnet",
+    "Merkle proofs generated on-the-fly from live Sepolia data",
+    "No mocking - everything is verifiable on-chain",
+    "Run \"node demo-script.js\" to regenerate this data"
+  ]
+}
