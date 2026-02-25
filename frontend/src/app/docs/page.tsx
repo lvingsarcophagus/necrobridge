@@ -5,8 +5,8 @@ import { ProcessDiagram } from '@/components/docs/ProcessDiagram';
 
 export default function DocsPage() {
   const sections = [
-    { 
-      title: 'Overview', 
+    {
+      title: 'Overview',
       id: 'overview',
       content: 'NecroBridge is the definitive protocol resurrection platform on Solana. We provide trustless infrastructure for cross-chain token migrations, enabling abandoned protocols to be revived and redeployed through community governance. Every decision is made transparently, on-chain, with full community participation.',
       subsections: [
@@ -20,8 +20,8 @@ export default function DocsPage() {
         }
       ]
     },
-    { 
-      title: 'Why Governance is Necessary', 
+    {
+      title: 'Why Governance is Necessary',
       id: 'governance-necessity',
       content: 'Without governance, token resurrection becomes centralized, opaque, and subject to whales or insiders making unilateral decisions. Transparent, decentralized governance ensures community consensus.',
       subsections: [
@@ -221,7 +221,7 @@ export default function DocsPage() {
         backgroundColor: '#0a0a0a',
         zIndex: 0
       }} />
-      
+
       {/* Dynamic Orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-5">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-[140px] animate-pulse" />
@@ -244,8 +244,8 @@ export default function DocsPage() {
             <aside className="md:col-span-3 sticky top-32 h-fit hidden md:block">
               <nav className="space-y-1">
                 {sections.map(s => (
-                  <a 
-                    key={s.id} 
+                  <a
+                    key={s.id}
                     href={`#${s.id}`}
                     className="block px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-white/5 rounded-lg transition-all"
                   >
@@ -259,29 +259,17 @@ export default function DocsPage() {
             <main className="md:col-span-9 space-y-16">
               {sections.map(section => (
                 <section key={section.id} id={section.id} className="scroll-mt-32">
-                  <h2 className="font-display text-3xl font-bold text-text-primary mb-6 flex items-center gap-3">
-                    <span className="w-8 h-px bg-white/20" />
+                  <h2 className="font-display text-2xl font-bold text-white mb-6 flex items-center gap-3 tracking-widest uppercase">
+                    <span className="w-8 h-px bg-white/50" />
                     {section.title}
                   </h2>
-                  <div className="rounded-2xl bg-black/5 p-4 backdrop-blur-sm transition-colors">
+                  <div className="p-8 border border-white/20 bg-black transition-colors">
                     {section.content && (
                       <p className="text-text-secondary leading-relaxed mb-4 whitespace-pre-wrap">
                         {section.content}
                       </p>
                     )}
-                    {section.items && (
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                        {section.items.map((item, i) => (
-                          <li key={i} className="flex items-center gap-3 text-sm text-text-muted">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    
                     {/* Diagram */}
-                    {/* @ts-ignore */}
                     {section.diagram && (
                       <div className="mt-8 mb-8">
                         {/* @ts-ignore */}
@@ -294,8 +282,8 @@ export default function DocsPage() {
                       <div className="mt-8 space-y-6 border-t border-white/5 pt-6">
                         {section.subsections.map((subsection, i) => (
                           <div key={i} className="space-y-3">
-                            <h3 className="text-lg font-semibold text-text-primary">{subsection.title}</h3>
-                            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap font-mono text-xs md:text-sm">
+                            <h3 className="text-lg font-bold text-white tracking-wide">{subsection.title}</h3>
+                            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap font-mono md:text-sm">
                               {subsection.content}
                             </p>
                           </div>
@@ -307,24 +295,24 @@ export default function DocsPage() {
               ))}
 
               {/* Call to Action Card */}
-              <div className="rounded-3xl bg-black/5 p-6 text-center mt-20 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <h2 className="font-display text-3xl font-bold text-text-primary mb-4 relative z-10">
-                  Ready to Resurrect a Protocol?
+              <div className="p-12 text-center mt-20 border border-white bg-black relative overflow-hidden group">
+                <div className="absolute inset-0 bg-white/[0.05] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <h2 className="font-display text-3xl font-bold text-white mb-4 relative z-10 uppercase tracking-widest">
+                  Ready to Resurrect?
                 </h2>
-                <p className="text-text-secondary mb-8 relative z-10 max-w-sm mx-auto">
+                <p className="text-text-secondary mb-8 relative z-10 max-w-sm mx-auto font-mono text-sm leading-relaxed">
                   Join the community-led resurrection movement. Nominate a dead protocol, vote on resurrections, and participate in decentralized governance.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-                  <Link 
+                  <Link
                     href="/nominate"
-                    className="px-8 py-3 rounded-full bg-text-primary text-surface font-semibold hover:scale-105 transition-transform"
+                    className="px-8 py-3 bg-white text-black font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors border border-white"
                   >
                     Nominate Protocol
                   </Link>
-                  <Link 
+                  <Link
                     href="/projects"
-                    className="px-8 py-3 rounded-full border border-white/10 text-text-primary font-semibold hover:bg-white/5 transition-colors"
+                    className="px-8 py-3 border border-white text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
                   >
                     Browse & Vote
                   </Link>

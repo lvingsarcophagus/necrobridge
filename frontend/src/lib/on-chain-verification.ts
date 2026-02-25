@@ -10,8 +10,7 @@
  * - Firestore is only for leaderboard/notifications, not claims authority
  */
 
-import { Connection, PublicKey, AccountInfo } from "@solana/web3.js";
-import { BorshCoder } from "@coral-xyz/anchor";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 export interface OnChainVerificationResult {
   isValid: boolean;
@@ -31,17 +30,14 @@ export interface OnChainVerificationResult {
  */
 export async function verifyMigrationOnChain(
   connection: Connection,
-  migrationPDA: PublicKey,
-  expectedAdmin: PublicKey
+  migrationPDA: PublicKey
 ): Promise<OnChainVerificationResult> {
-  const startTime = Date.now();
-  
   try {
     console.log("🔍 Verifying migration account on-chain...");
-    
+
     // Fetch the migration account
     const accountInfo = await connection.getAccountInfo(migrationPDA);
-    
+
     if (!accountInfo) {
       console.warn("⚠️ Migration account not found on-chain");
       return {
@@ -60,7 +56,7 @@ export async function verifyMigrationOnChain(
     console.log("✅ Migration account found");
     console.log("   Owner:", accountInfo.owner.toString());
     console.log("   Lamports:", accountInfo.lamports);
-    
+
     // Basic verification: check if it's owned by the program
     // In production, you'd parse the account data using BorshCoder
     const isValid = accountInfo.owner.equals(new PublicKey("11111111111111111111111111111111")) === false;
@@ -84,7 +80,7 @@ export async function verifyMigrationOnChain(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("❌ On-chain verification failed:", errorMsg);
-    
+
     return {
       isValid: false,
       status: "ERROR",
@@ -108,10 +104,10 @@ export async function verifyUserNotClaimedOnChain(
 ): Promise<OnChainVerificationResult> {
   try {
     console.log("🔍 Verifying user claim status on-chain...");
-    
+
     // Check if the user claim account exists
     const accountInfo = await connection.getAccountInfo(userClaimPDA);
-    
+
     if (!accountInfo) {
       console.log("✅ User hasn't claimed yet (account not found)");
       return {
@@ -142,7 +138,7 @@ export async function verifyUserNotClaimedOnChain(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("❌ Claim verification failed:", errorMsg);
-    
+
     return {
       isValid: false,
       status: "ERROR",
@@ -171,18 +167,17 @@ export async function performFullClaimHealthCheck(
   tokenVault?: PublicKey
 ): Promise<OnChainVerificationResult> {
   const results: OnChainVerificationResult[] = [];
-  
+
   try {
     console.log("🏥 Performing full claim health check...");
-    
+
     // Check 1: Migration is active
     const migrationCheck = await verifyMigrationOnChain(
       connection,
-      migrationPDA,
-      new PublicKey("11111111111111111111111111111111")
+      migrationPDA
     );
     results.push(migrationCheck);
-    
+
     if (!migrationCheck.isValid) {
       return {
         isValid: false,
@@ -200,7 +195,7 @@ export async function performFullClaimHealthCheck(
     // Check 2: User hasn't claimed
     const claimCheck = await verifyUserNotClaimedOnChain(connection, userClaimPDA);
     results.push(claimCheck);
-    
+
     if (!claimCheck.isValid) {
       return claimCheck;
     }
@@ -241,7 +236,7 @@ export async function performFullClaimHealthCheck(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("❌ Health check failed:", errorMsg);
-    
+
     return {
       isValid: false,
       status: "ERROR",
@@ -276,8 +271,7 @@ export async function syncFrontendWithOnChain(
 }> {
   const onChainState = await verifyMigrationOnChain(
     connection,
-    migrationPDA,
-    new PublicKey("11111111111111111111111111111111")
+    migrationPDA
   );
 
   const isSynced = onChainState.status === "VERIFIED";

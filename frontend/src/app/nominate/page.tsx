@@ -21,7 +21,7 @@ const CHAINS = [
 export default function NominatePage() {
   const { publicKey, sendTransaction } = useWallet();
   const { connection } = useSolana();
-  
+
   const [form, setForm] = useState({
     projectName: "",
     ticker: "",
@@ -67,7 +67,7 @@ export default function NominatePage() {
       // Sign and send transaction
       try {
         const signature = await sendTransaction(tx, connection);
-        
+
         // Wait for confirmation
         const latestBlockHash = await connection.getLatestBlockhash();
         await connection.confirmTransaction({
@@ -78,7 +78,7 @@ export default function NominatePage() {
 
         // Submit nomination with signature
         const result = await submitNomination(publicKey.toString(), form, signature);
-        
+
         if (result.success) {
           setSubmissionHash(signature);
           setSubmitted(true);

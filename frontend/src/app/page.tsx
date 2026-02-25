@@ -1,8 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ProjectCard } from "@/components/ProjectCard";
 import { StatsCard } from "@/components/StatsCard";
 import { MigrationPathsSection } from "@/components/MigrationPathsSection";
-import { MOCK_PROJECTS, PLATFORM_STATS } from "@/lib/mock-data";
+import { PLATFORM_STATS } from "@/lib/mock-data";
 
 function HeroSection() {
   return (
@@ -184,8 +186,51 @@ function StatsSection() {
   );
 }
 
+import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import type { Project } from "@/components/ProjectCard";
+
 function FeaturedProjectsSection() {
-  const featured = MOCK_PROJECTS.slice(0, 3);
+  const [featured, setFeatured] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const nominationsRef = collection(db, "nominations");
+        const q = query(nominationsRef, orderBy("createdAt", "desc"), limit(3));
+        const snapshot = await getDocs(q);
+
+        const projects: Project[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          projects.push({
+            id: data.ticker,
+            name: data.projectName,
+            ticker: data.ticker,
+            sourceChain: data.sourceChain || "unknown",
+            status: "nominated",
+            votes: 0,
+            votesRequired: 100,
+            tvlLocked: "$0",
+            description: data.reason || "No description",
+          });
+        });
+        setFeatured(projects);
+      } catch (error) {
+        console.error("Error fetching featured projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeatured();
+  }, []);
+
+  if (loading) return null; // Or a subtle loading skeleton
+
+  if (featured.length === 0) return null; // Don't show the section if there are no projects yet
 
   return (
     <section className="py-20 lg:py-28">
@@ -211,8 +256,8 @@ function FeaturedProjectsSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {featured.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+          {featured.map((project, index) => (
+            <ProjectCard key={`${project.id}-${index}`} project={project} />
           ))}
         </div>
 

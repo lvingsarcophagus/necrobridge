@@ -7,29 +7,29 @@
   --color-primary-dark: #e0e0e0;
   --color-accent: #ffffff;
   --color-accent-dark: #f0f0f0;
-  --color-surface: #0a0a0a;
-  --color-surface-light: #121212;
-  --color-surface-lighter: #1e1e1e;
-  --color-surface-border: rgba(255, 255, 255, 0.08);
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-success: #22c55e;
+  --color-surface: #000000;
+  --color-surface-light: #0a0a0a;
+  --color-surface-lighter: #121212;
+  --color-surface-border: rgba(255, 255, 255, 0.15);
+  --color-danger: #ff3333;
+  --color-warning: #ffcc00;
+  --color-success: #00ff00;
   --color-text-primary: #ffffff;
-  --color-text-secondary: #b3b3b3;
-  --color-text-muted: #808080;
-  --color-background: #0a0a0a;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #666666;
+  --color-background: #000000;
   --color-foreground: #ffffff;
-  --color-card: #0a0a0a;
+  --color-card: #000000;
   --color-card-foreground: #ffffff;
-  --color-popover: #0a0a0a;
+  --color-popover: #000000;
   --color-popover-foreground: #ffffff;
-  --color-muted: #262626;
+  --color-muted: #1a1a1a;
   --color-muted-foreground: #a3a3a3;
-  --color-accent-foreground: #0a0a0a;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #fafafa;
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-input: rgba(255, 255, 255, 0.08);
+  --color-accent-foreground: #000000;
+  --color-destructive: #ff3333;
+  --color-destructive-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.15);
+  --color-input: rgba(255, 255, 255, 0.15);
   --color-ring: #ffffff;
   --color-secondary: rgba(255, 255, 255, 0.15);
   --color-secondary-foreground: #ffffff;
@@ -58,9 +58,9 @@ body::before {
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
   pointer-events: none;
   z-index: -1;
 }
@@ -87,31 +87,31 @@ body::before {
 
 /* ── Glass card ── */
 .glass {
-  background: rgba(10, 10, 10, 0.7);
-  backdrop-filter: blur(16px);
+  background: #000000;
   border: 1px solid var(--color-surface-border);
+  box-shadow: none;
 }
 
 /* ── Button Styles ── */
 button, [role="button"], .btn {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: transparent;
   color: var(--color-text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
 }
 
 button:hover:not(:disabled), 
 [role="button"]:hover, 
 .btn:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
 }
 
 button:active:not(:disabled), 
 [role="button"]:active, 
 .btn:active {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: #e0e0e0;
 }
 
 /* ── Animations ── */

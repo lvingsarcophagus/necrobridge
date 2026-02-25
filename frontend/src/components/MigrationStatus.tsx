@@ -8,6 +8,7 @@ import { TokenBridge } from './TokenBridge';
 import { ClaimTokensInterface } from './ClaimTokensInterface';
 import { WormholeConnectWidget } from './WormholeConnectWidget';
 import { CreateSPLTokenButton } from './CreateSPLTokenButton';
+import { MetaMaskConnector } from './MetaMaskConnector';
 import { executeClaimTransaction } from '@/lib/claim-transactions';
 import { HELIUS_RPC } from '@/lib/config';
 
@@ -26,6 +27,7 @@ interface SnapshotData {
       proof: string[];
     };
   };
+  totalTokens?: string;
   generatedAt?: string;
   retrievedAt?: string;
 }
@@ -33,7 +35,7 @@ interface SnapshotData {
 export function MigrationStatus({ project, votePercent }: MigrationStatusProps) {
   const wallet = useWallet();
   const { publicKey, sendTransaction } = wallet;
-  
+
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [claimingInProgress, setClaimingInProgress] = useState(false);
   const [claimSuccess, setClaimSuccess] = useState(false);
@@ -70,10 +72,10 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
       setClaimingInProgress(true);
       setClaimError(null);
       setTxSignature(null);
-      
+
       const connection = new Connection(HELIUS_RPC);
       const claimData = snapshotData.claims[selectedWallet];
-      
+
       if (!claimData) {
         throw new Error(`❌ Claim data not found for wallet: ${selectedWallet}`);
       }
@@ -99,7 +101,7 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
       setTxSignature(tx);
       setClaimingInProgress(false);
       setClaimSuccess(true);
-      
+
       // Auto-close modal after success animation
       setTimeout(() => {
         setShowClaimModal(false);
@@ -117,14 +119,14 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
   const handleGenerateSnapshot = async () => {
     setSnapshotLoading(true);
     setSnapshotError(null);
-    
+
     try {
       const response = await fetch(`/api/migrations/snapshot?projectId=${project.id}`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to generate snapshot: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setSnapshotData(data);
     } catch (error) {
@@ -276,21 +278,19 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setMigrationTab('canonical')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                migrationTab === 'canonical'
-                  ? 'bg-accent text-surface shadow-lg shadow-accent/50'
-                  : 'bg-white/10 text-text-secondary hover:bg-white/20'
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${migrationTab === 'canonical'
+                ? 'bg-accent text-surface shadow-lg shadow-accent/50'
+                : 'bg-white/10 text-text-secondary hover:bg-white/20'
+                }`}
             >
               ⚡ Canonical (Sunrise/NTT)
             </button>
             <button
               onClick={() => setMigrationTab('snapshot')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                migrationTab === 'snapshot'
-                  ? 'bg-success text-surface shadow-lg shadow-success/50'
-                  : 'bg-white/10 text-text-secondary hover:bg-white/20'
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${migrationTab === 'snapshot'
+                ? 'bg-success text-surface shadow-lg shadow-success/50'
+                : 'bg-white/10 text-text-secondary hover:bg-white/20'
+                }`}
             >
               🔓 Snapshot + Claims
             </button>
@@ -326,13 +326,13 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
             </p>
 
             <div className="mb-6">
-              <WormholeConnectWidget 
+              <WormholeConnectWidget
                 sourceChain="Ethereum"
                 sourceToken={project.sourceTokenAddress || "0x1234567890abcdef"}
               />
             </div>
 
-            <CreateSPLTokenButton 
+            <CreateSPLTokenButton
               projectTicker={project.ticker}
             />
 
@@ -419,7 +419,7 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
                       <span className="text-xl">✅</span>
                       <h4 className="font-semibold text-success">Snapshot Generated!</h4>
                     </div>
-                    
+
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between items-start gap-2">
                         <span className="text-text-muted">Merkle Root:</span>
@@ -458,7 +458,7 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
                                 {Object.values(snapshotData.claims)[0].proof.slice(0, 3).map((p, i) => `${i + 1}. ${p.slice(0, 20)}...`).join('\n')}
                                 {Object.values(snapshotData.claims)[0].proof.length > 3 && (
                                   <>
-{'\n'}...+{Object.values(snapshotData.claims)[0].proof.length - 3} more</>
+                                    {'\n'}...+{Object.values(snapshotData.claims)[0].proof.length - 3} more</>
                                 )}
                               </pre>
                             </div>
@@ -487,6 +487,11 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
                     >
                       Claim with Proof →
                     </button>
+                  </div>
+
+                  {/* Add MetaMaskConnector here so users can verify holdings */}
+                  <div className="mt-6">
+                    <MetaMaskConnector />
                   </div>
                 </div>
               )}

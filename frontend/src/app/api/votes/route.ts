@@ -15,6 +15,7 @@ import {
   where,
   increment,
   writeBatch,
+  updateDoc,
 } from 'firebase/firestore';
 
 // Firebase config
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     // Apply QUADRATIC VOTING: actual voting power = sqrt(power)
     // This prevents whales from dominating: 1000 SOL → 31.6 power, 1 SOL → 1 power
     const quadraticVotingPower = Math.sqrt(power);
-    
+
     console.log(`Quadratic voting: ${power} SOL → ${quadraticVotingPower.toFixed(2)} power`);
 
     // Check if wallet already voted on this project
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Attempt to verify transaction on-chain, but don't fail if it's not confirmed yet
     try {
       const confirmationStatus = await connection.getSignatureStatus(transactionSignature);
-      
+
       // Log for debugging
       console.log(`Transaction ${transactionSignature.slice(0, 10)}... status:`, {
         value: confirmationStatus.value ? 'Found' : 'Not found',
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
       const currentTally = tallySnap.data();
       const currentWallets = currentTally.uniqueWalletsList || [];
       const newWalletCount = currentWallets.includes(walletAddress) ? currentWallets.length : currentWallets.length + 1;
-      
+
       batch.update(tallyRef, {
         [direction === 'yes' ? 'yes' : 'no']: increment(quadraticVotingPower),
         total: increment(quadraticVotingPower),
@@ -202,6 +203,17 @@ export async function POST(request: NextRequest) {
         uniqueWalletsList: currentWallets.includes(walletAddress) ? currentWallets : [...currentWallets, walletAddress],
         lastUpdated: new Date().toISOString(),
       });
+    }
+
+    // Also update the nomination's voteCount to stay in sync
+    const nominationRef = doc(db, 'nominations', projectId);
+    try {
+      await updateDoc(nominationRef, {
+        voteCount: increment(1),
+      });
+    } catch (e) {
+      // Nomination doc may not exist yet, log but don't fail
+      console.warn('Could not update nomination voteCount:', e);
     }
 
     // Commit batch
@@ -246,8 +258,8 @@ export async function POST(request: NextRequest) {
       errorType: error instanceof Error ? error.constructor.name : 'Unknown',
     });
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         message: `Failed to submit vote: ${errorMsg}`,
         error: process.env.NODE_ENV === 'development' ? errorMsg : undefined,
       },
@@ -319,10 +331,13 @@ export async function GET(request: NextRequest) {
       }
 
       const tally = tallySnap.data();
-      const uniqueWallets = tally.uniqueWallets || 0;
+      // Use uniqueWalletsList length as source of truth for wallet count
+      const uniqueWallets = (tally.uniqueWalletsList && Array.isArray(tally.uniqueWalletsList))
+        ? tally.uniqueWalletsList.length
+        : (tally.uniqueWallets || 0);
       const minimumWalletsThreshold = 50;
       const hasMinimumWallets = uniqueWallets >= minimumWalletsThreshold;
-      
+
       // Query votes for this project to get count
       const votesQuery = query(
         collection(db, 'votes'),

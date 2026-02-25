@@ -2,13 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { ProjectCard } from "@/components/ProjectCard";
-import { MetaMaskConnector } from "@/components/MetaMaskConnector";
-import { MOCK_PROJECTS } from "@/lib/mock-data";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import type { Project } from "@/components/ProjectCard";
 
-const CHAINS = ["All", "Ethereum", "Terra", "Polygon", "Avalanche", "Fantom", "BSC", "ethereum", "bsc", "polygon", "avalanche", "fantom", "arbitrum", "optimism"];
+const CHAINS = ["All", "Ethereum", "Terra", "Polygon", "Avalanche", "Fantom", "BSC", "arbitrum", "optimism"];
 const STATUSES: { value: Project["status"] | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "nominated", label: "Nominated" },
@@ -23,7 +21,7 @@ export default function ProjectsPage() {
   const [chainFilter, setChainFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState<Project["status"] | "all">("all");
   const [sortBy, setSortBy] = useState<"votes" | "name">("votes");
-  const [allProjects, setAllProjects] = useState<Project[]>([...MOCK_PROJECTS]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,27 +30,27 @@ export default function ProjectsPage() {
     try {
       const nominationsRef = collection(db, "nominations");
       const q = query(nominationsRef, orderBy("createdAt", "desc"));
-      
+
       // Get nominations once
       const snapshot = await getDocs(q);
-      const nominations: any[] = [];
-      
+      const nominations: Project[] = [];
+
       for (const doc of snapshot.docs) {
         const data = doc.data();
-        
+
         // Fetch vote tally for this nomination
         let status: Project["status"] = "nominated";
         let votes = 0;
-        
+
         try {
-          const voteResponse = await fetch(`/api/votes?projectId=${data.id}`);
+          const voteResponse = await fetch(`/api/votes?projectId=${data.ticker}`);
           if (voteResponse.ok) {
             const voteData = await voteResponse.json();
             const totalVotes = voteData.votes?.total || 0;
             const yesVotes = voteData.votes?.yes || 0;
-            
+
             votes = totalVotes;
-            
+
             if (totalVotes > 0) {
               const approvalPercentage = (yesVotes / totalVotes) * 100;
               if (approvalPercentage >= 80) {
@@ -63,11 +61,11 @@ export default function ProjectsPage() {
             }
           }
         } catch (error) {
-          console.error(`Error fetching votes for ${data.id}:`, error);
+          console.error(`Error fetching votes for ${data.ticker}:`, error);
         }
-        
+
         nominations.push({
-          id: data.id || data.ticker,
+          id: data.ticker,
           name: data.projectName,
           ticker: data.ticker,
           sourceChain: data.sourceChain?.toString() || "unknown",
@@ -79,19 +77,12 @@ export default function ProjectsPage() {
         });
       }
 
-      // Combine mock projects with nominations (nominations take precedence by ticker)
-      const nominationTickers = new Set(nominations.map(n => n.ticker));
-      const combined = [
-        ...nominations,
-        ...MOCK_PROJECTS.filter(p => !nominationTickers.has(p.ticker))
-      ];
-
-      setAllProjects(combined);
+      setAllProjects(nominations);
       setLoading(false);
       setRefreshing(false);
     } catch (error) {
       console.error("Error fetching nominations:", error);
-      setAllProjects(MOCK_PROJECTS);
+      setAllProjects([]);
       setLoading(false);
       setRefreshing(false);
     }
@@ -169,10 +160,7 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      {/* MetaMask Connector Section */}
-      <div className="mb-8">
-        <MetaMaskConnector />
-      </div>
+
 
       {/* Filters */}
       <div className="glass rounded-xl p-4 mb-6">
@@ -252,7 +240,6 @@ export default function ProjectsPage() {
         <>
           <p className="text-xs text-text-muted mb-4">
             {filtered.length} project{filtered.length !== 1 && "s"} found
-            {allProjects.length > MOCK_PROJECTS.length && ` (${allProjects.length - MOCK_PROJECTS.length} new nominations)`}
           </p>
 
           {/* Grid */}

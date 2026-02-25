@@ -57,16 +57,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Get migration details including merkle root
-    const migrationDoc = await getDoc(doc(db, "migrations", projectId));
-
-    // For demo purposes, use sample root if migration doesn't exist
-    const snapshotRoot = migrationDoc.exists()
-      ? migrationDoc.data()?.snapshotRoot
-      : "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    let snapshotRoot = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+    try {
+      const migrationDoc = await getDoc(doc(db, "migrations", projectId));
+      if (migrationDoc.exists() && migrationDoc.data()?.snapshotRoot) {
+        snapshotRoot = migrationDoc.data()?.snapshotRoot;
+      }
+    } catch (e) {
+      // Firestore may not be accessible, continue with demo root
+      console.warn("Could not read migration doc from Firestore:", e);
+    }
 
     // Check if user has already claimed
     const claimDocRef = doc(db, "migrations", projectId, "claims", userAddress);
-    
+
     let claimDoc = null;
     try {
       claimDoc = await getDoc(claimDocRef);
@@ -149,15 +153,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const claimDocRef = doc(db, "migrations", projectId, "claims", userAddress);
-    const claimDoc = await getDoc(claimDocRef);
+    let claimed = false;
+    let claimData = null;
+    try {
+      const claimDocRef = doc(db, "migrations", projectId, "claims", userAddress);
+      const claimDoc = await getDoc(claimDocRef);
+      claimed = claimDoc.exists();
+      claimData = claimDoc.exists() ? claimDoc.data() : null;
+    } catch (e) {
+      // Firestore may block subcollection reads, default to not-claimed
+      console.warn("Could not read claim doc from Firestore:", e);
+    }
 
     return NextResponse.json(
       {
         projectId,
         userAddress,
-        claimed: claimDoc.exists(),
-        data: claimDoc.exists() ? claimDoc.data() : null,
+        claimed,
+        data: claimData,
       },
       { status: 200 }
     );
