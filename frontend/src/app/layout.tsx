@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description:
     "Community-driven migration layer for dead crypto assets. Nominate, vote, and bridge defunct protocol tokens to Solana using Wormhole NTT and trustless Merkle proofs.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💀</text></svg>",
+    icon: "/death-star.ico",
   },
 };
 

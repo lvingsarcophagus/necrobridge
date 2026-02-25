@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSolana } from "@/hooks/useSolana";
 import { createNominationTransaction, submitNomination } from "@/lib/nominations";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { Trophy, Users, TrendingUp } from "lucide-react";
 
 const CHAINS = [
   { value: "", label: "Select source chain" },
@@ -34,6 +37,51 @@ export default function NominatePage() {
   const [submitted, setSubmitted] = useState(false);
   const [submissionHash, setSubmissionHash] = useState("");
   const [error, setError] = useState("");
+  const [leaderboardStats, setLeaderboardStats] = useState({
+    position: 0,
+    totalNominations: 0,
+    topProject: "",
+    topProjectVotes: 0,
+  });
+
+  // Fetch leaderboard position after submission
+  async function fetchLeaderboardStats(ticker: string) {
+    try {
+      // Get all nominations
+      const nominationsRef = collection(db, "nominations");
+      const nominationsSnapshot = await getDocs(nominationsRef);
+      const totalNominations = nominationsSnapshot.size;
+
+      // Get vote tallies ordered by total votes
+      const talliesRef = collection(db, "voteTallies");
+      const talliesQuery = query(talliesRef, orderBy("total", "desc"));
+      const talliesSnapshot = await getDocs(talliesQuery);
+
+      let position = totalNominations; // Default to last position
+      let topProject = "";
+      let topProjectVotes = 0;
+
+      talliesSnapshot.docs.forEach((doc, index) => {
+        const data = doc.data();
+        if (index === 0) {
+          topProject = doc.id;
+          topProjectVotes = data.total || 0;
+        }
+        if (doc.id === ticker) {
+          position = index + 1;
+        }
+      });
+
+      setLeaderboardStats({
+        position,
+        totalNominations,
+        topProject,
+        topProjectVotes,
+      });
+    } catch (error) {
+      console.error("Error fetching leaderboard stats:", error);
+    }
+  }
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -82,6 +130,8 @@ export default function NominatePage() {
         if (result.success) {
           setSubmissionHash(signature);
           setSubmitted(true);
+          // Fetch leaderboard stats for the new nomination
+          await fetchLeaderboardStats(form.ticker);
         } else {
           setError(result.message || "Failed to submit nomination");
         }
@@ -101,56 +151,106 @@ export default function NominatePage() {
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-        <div className="glass rounded-2xl p-10">
-          <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h1 className="font-display text-2xl font-bold mb-3">
-            Nomination Submitted!
-          </h1>
-          <p className="text-text-secondary mb-4">
-            <strong>{form.projectName}</strong> (${form.ticker}) has been
-            submitted for community review. Voting will begin once the
-            nomination is validated.
-          </p>
-          <div className="mb-6 p-3 rounded-lg bg-surface-lighter border border-surface-border">
-            <p className="text-xs text-text-muted mb-1.5">Transaction Hash</p>
-            <p className="text-sm font-mono text-primary break-all">{submissionHash}</p>
-            <a
-              href={`https://solscan.io/tx/${submissionHash}?cluster=devnet`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-primary hover:underline mt-2 inline-block"
-            >
-              View on Solscan →
-            </a>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/projects"
-              className="px-5 py-2.5 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold text-sm transition-colors"
-            >
-              View All Projects
-            </Link>
-            <button
-              onClick={() => {
-                setSubmitted(false);
-                setForm({
-                  projectName: "",
-                  ticker: "",
-                  sourceChain: "",
-                  contractAddress: "",
-                  reason: "",
-                  website: "",
-                });
-              }}
-              className="px-5 py-2.5 rounded-lg border border-surface-border text-text-secondary hover:text-text-primary text-sm transition-colors"
-            >
-              Nominate Another
-            </button>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Background */}
+        <div className="fixed inset-0 bg-gradient-to-b from-black via-gray-950 to-black" />
+        
+        {/* Grid Background */}
+        <div className="fixed inset-0 pointer-events-none" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+        
+        {/* Glow Effects */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-white/5 rounded-full blur-[150px]" />
+          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-white/3 rounded-full blur-[120px]" />
+        </div>
+        
+        <div className="relative z-10 mx-auto max-w-2xl px-4 py-20 text-center">
+          <div className="glass rounded-2xl p-10 border border-white/10">
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h1 className="font-display text-2xl font-bold mb-3">
+              Nomination Submitted!
+            </h1>
+            <p className="text-text-secondary mb-4">
+              <strong>{form.projectName}</strong> (${form.ticker}) has been
+              submitted for community review. Voting will begin once the
+              nomination is validated.
+            </p>
+            
+            {/* Leaderboard Stats */}
+            <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Trophy className="w-5 h-5 text-text-primary" />
+                <span className="text-sm font-medium text-text-primary">Leaderboard Position</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-3xl font-display font-bold text-text-primary">
+                    #{leaderboardStats.position}
+                  </p>
+                  <p className="text-xs text-text-muted">of {leaderboardStats.totalNominations} projects</p>
+                </div>
+                <div className="text-center border-x border-white/10">
+                  <p className="text-2xl font-display font-bold text-text-primary">
+                    {leaderboardStats.totalNominations}
+                  </p>
+                  <p className="text-xs text-text-muted flex items-center justify-center gap-1">
+                    <Users className="w-3 h-3" /> Total
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-display font-bold text-text-primary truncate px-2">
+                    {leaderboardStats.topProject || "—"}
+                  </p>
+                  <p className="text-xs text-text-muted flex items-center justify-center gap-1">
+                    <TrendingUp className="w-3 h-3" /> Leading
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6 p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-text-muted mb-1.5">Transaction Hash</p>
+              <p className="text-sm font-mono text-text-primary break-all">{submissionHash}</p>
+              <a
+                href={`https://solscan.io/tx/${submissionHash}?cluster=devnet`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-text-primary hover:underline mt-2 inline-block"
+              >
+                View on Solscan →
+              </a>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/projects"
+                className="px-5 py-2.5 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 hover:border-white/30 font-semibold text-sm transition-colors"
+              >
+                View All Projects
+              </Link>
+              <button
+                onClick={() => {
+                  setSubmitted(false);
+                  setForm({
+                    projectName: "",
+                    ticker: "",
+                    sourceChain: "",
+                    contractAddress: "",
+                    reason: "",
+                    website: "",
+                  });
+                }}
+                className="px-5 py-2.5 rounded-lg border border-white/10 text-text-secondary hover:text-text-primary hover:bg-white/5 text-sm transition-colors"
+              >
+                Nominate Another
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -158,7 +258,23 @@ export default function NominatePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-10">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black via-gray-950 to-black" />
+      
+      {/* Grid Background */}
+      <div className="fixed inset-0 pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+        backgroundSize: '40px 40px',
+      }} />
+      
+      {/* Glow Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-white/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-white/3 rounded-full blur-[120px]" />
+      </div>
+      
+      <div className="relative z-10 mx-auto max-w-2xl px-4 sm:px-6 py-10">
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">
@@ -310,6 +426,7 @@ export default function NominatePage() {
           )}
         </button>
       </form>
+      </div>
     </div>
   );
 }

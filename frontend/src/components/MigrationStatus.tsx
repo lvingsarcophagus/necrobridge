@@ -4,13 +4,11 @@ import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Project } from './ProjectCard';
-import { TokenBridge } from './TokenBridge';
 import { ClaimTokensInterface } from './ClaimTokensInterface';
-import { WormholeConnectWidget } from './WormholeConnectWidget';
-import { CreateSPLTokenButton } from './CreateSPLTokenButton';
 import { MetaMaskConnector } from './MetaMaskConnector';
 import { executeClaimTransaction } from '@/lib/claim-transactions';
 import { HELIUS_RPC } from '@/lib/config';
+import Link from 'next/link';
 
 interface MigrationStatusProps {
   project: Project;
@@ -155,8 +153,6 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
         {/* Claim Tokens Interface - Trustless merkle-proof based claims */}
         <ClaimTokensInterface
           migrationAddress={project.id}
-          userClaimAmount="84021"
-          isEligible={true}
         />
 
         {/* Keep the old modal for now as fallback */}
@@ -269,103 +265,148 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
 
   if (project.status === 'approved' && votePercent >= 80) {
     return (
-      <div className="space-y-4">
-        {/* Migration Method Selector */}
-        <div className="glass rounded-xl p-4 border border-accent/30 bg-gradient-to-br from-accent/10 to-primary/5">
-          <p className="text-xs text-text-muted mb-3 font-semibold uppercase tracking-wide">
-            🗺️ Choose Your Migration Path
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setMigrationTab('canonical')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${migrationTab === 'canonical'
-                ? 'bg-accent text-surface shadow-lg shadow-accent/50'
-                : 'bg-white/10 text-text-secondary hover:bg-white/20'
-                }`}
-            >
-              ⚡ Canonical (Sunrise/NTT)
-            </button>
-            <button
-              onClick={() => setMigrationTab('snapshot')}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${migrationTab === 'snapshot'
-                ? 'bg-success text-surface shadow-lg shadow-success/50'
-                : 'bg-white/10 text-text-secondary hover:bg-white/20'
-                }`}
-            >
-              🔓 Snapshot + Claims
-            </button>
+      <div className="space-y-6">
+        {/* Success Banner */}
+        <div className="glass rounded-xl p-6 border-2 border-success/40 bg-gradient-to-br from-success/10 to-primary/5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center text-2xl flex-shrink-0">
+              🎉
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-semibold text-success mb-1">
+                Community Vote Passed!
+              </h3>
+              <p className="text-sm text-text-secondary">
+                {project.name} has been approved for resurrection with {votePercent}% approval. 
+                Choose how you want to proceed with the migration.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Canonical Path (Sunrise/NTT) */}
+        {/* Migration Method Selector - Simplified */}
+        <div className="glass rounded-xl p-6 border border-white/10">
+          <h4 className="font-display text-sm font-semibold text-text-primary mb-4 uppercase tracking-wide">
+            Choose Migration Path
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Path A: Official */}
+            <button
+              onClick={() => setMigrationTab('canonical')}
+              className={`p-5 rounded-xl border-2 text-left transition-all duration-300 group ${
+                migrationTab === 'canonical'
+                  ? 'border-accent bg-accent/10'
+                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-2xl">🌅</span>
+                {migrationTab === 'canonical' && (
+                  <span className="px-2 py-0.5 rounded-full bg-accent/20 text-accent text-xs font-medium">
+                    Selected
+                  </span>
+                )}
+              </div>
+              <h5 className="font-semibold text-text-primary mb-1 group-hover:text-accent transition-colors">
+                Official Revival
+              </h5>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Work with the original team to create the canonical token on Solana. Best for active projects with responsive founders.
+              </p>
+            </button>
+
+            {/* Path B: Community */}
+            <button
+              onClick={() => setMigrationTab('snapshot')}
+              className={`p-5 rounded-xl border-2 text-left transition-all duration-300 group ${
+                migrationTab === 'snapshot'
+                  ? 'border-success bg-success/10'
+                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-2xl">🧟</span>
+                {migrationTab === 'snapshot' && (
+                  <span className="px-2 py-0.5 rounded-full bg-success/20 text-success text-xs font-medium">
+                    Selected
+                  </span>
+                )}
+              </div>
+              <h5 className="font-semibold text-text-primary mb-1 group-hover:text-success transition-colors">
+                Community Fork
+              </h5>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Community-led resurrection without needing the original team. Perfect for abandoned or dead projects.
+              </p>
+            </button>
+          </div>
+
+          {/* Learn More Link */}
+          <div className="mt-4 pt-4 border-t border-white/5">
+            <Link 
+              href="/docs#migration-paths" 
+              className="text-xs text-text-muted hover:text-text-primary transition-colors inline-flex items-center gap-1"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Learn more about migration paths in our docs
+            </Link>
+          </div>
+        </div>
+
+        {/* Path A: Official Revival Content */}
         {migrationTab === 'canonical' && (
-          <div className="glass rounded-xl p-6 border-2 border-accent/40 bg-gradient-to-br from-accent/10 to-primary/5">
-            <div className="flex items-start justify-between mb-4">
+          <div className="glass rounded-xl p-6 border border-accent/30 bg-gradient-to-br from-accent/5 to-transparent">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center text-accent flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
               <div>
-                <h3 className="font-display text-lg font-semibold text-accent">
-                  🌅 Ready for Sunrise Migration
-                </h3>
-                <p className="text-xs text-text-muted mt-1">Recommended if you have coordination</p>
+                <h4 className="font-display font-semibold text-text-primary mb-1">
+                  Official Revival Process
+                </h4>
+                <p className="text-sm text-text-secondary">
+                  This path requires coordination with the original project team.
+                </p>
               </div>
-              <span className="text-3xl animate-bounce">🔗</span>
             </div>
 
-            <div className="mb-6 p-4 rounded-lg bg-white/5 border border-accent/20 space-y-2">
-              <p className="text-sm font-semibold text-accent">What happens:</p>
-              <ul className="text-xs text-text-secondary space-y-1 ml-4">
-                <li>✓ Register on Sunrise (Wormhole NTT)</li>
-                <li>✓ Existing holders burn/lock old tokens</li>
-                <li>✓ Native canonical SPL token minted 1:1 on Solana</li>
-                <li>✓ Instant Jupiter listing & unified liquidity</li>
-                <li>✓ Recognized by all Solana apps</li>
-              </ul>
+            <div className="space-y-4 mb-6">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center flex-shrink-0 font-medium">1</span>
+                <div>
+                  <p className="text-sm text-text-primary font-medium">Contact Original Team</p>
+                  <p className="text-xs text-text-muted">Reach out to the original founders for approval</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center flex-shrink-0 font-medium">2</span>
+                <div>
+                  <p className="text-sm text-text-primary font-medium">Register on Wormhole NTT</p>
+                  <p className="text-xs text-text-muted">Create canonical SPL token representation</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center flex-shrink-0 font-medium">3</span>
+                <div>
+                  <p className="text-sm text-text-primary font-medium">Holders Claim Tokens</p>
+                  <p className="text-xs text-text-muted">Original holders claim their Solana tokens</p>
+                </div>
+              </div>
             </div>
 
-            <p className="text-sm text-text-secondary mb-6">
-              {project.name} passed community vote! Register on Sunrise (Wormhole NTT) to create a canonical SPL token on Solana.
-            </p>
-
-            <div className="mb-6">
-              <WormholeConnectWidget
-                sourceChain="Ethereum"
-                sourceToken={project.sourceTokenAddress || "0x1234567890abcdef"}
-              />
-            </div>
-
-            <CreateSPLTokenButton
-              projectTicker={project.ticker}
-            />
-
-            <details className="group mt-4">
-              <summary className="cursor-pointer text-xs text-text-muted hover:text-text-secondary transition-colors">
-                What is Sunrise / Wormhole NTT?
-              </summary>
-              <div className="mt-2 p-3 bg-white/5 rounded-lg border border-white/10 text-xs text-text-secondary space-y-2">
-                <p>
-                  <strong>Sunrise</strong> (by Wormhole Foundation) is a token bridge that creates canonical SPL representations of tokens from other chains.
-                </p>
-                <p>
-                  <strong>NTT</strong> (Native Token Transfer) ensures your token holders get 1:1 SPL tokens on Solana with proper accounting.
-                </p>
-                <p>
-                  Once registered, holders can claim their tokens during the claims phase.
-                </p>
-                <a
-                  href="https://wormhole.com/docs/learn/what-is-wormhole/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent hover:underline"
-                >
-                  Learn more →
+            <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
+              <p className="text-xs text-text-secondary">
+                <strong className="text-accent">Note:</strong> This path creates the "official" token on Solana. 
+                The original team maintains governance and brand rights. 
+                <a href="https://wormhole.com/docs/learn/what-is-wormhole/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline ml-1">
+                  Learn about Wormhole NTT →
                 </a>
-              </div>
-            </details>
-
-            <div className="mt-6">
-              <TokenBridge
-                sourceChain="Ethereum"
-                sourceTokenAddress={project.sourceTokenAddress || "0x1234567890abcdef"}
-              />
+              </p>
             </div>
           </div>
         )}

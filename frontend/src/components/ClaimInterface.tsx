@@ -51,8 +51,6 @@ export function ClaimInterface() {
         <div className="pt-4 border-t border-white/10 relative z-10">
           <ClaimTokensInterface
             migrationAddress={selectedProject.id}
-            userClaimAmount="84021"
-            isEligible={true}
           />
         </div>
       )}

@@ -13,27 +13,32 @@ import {
   checkUserClaimed,
 } from "@/lib/anchor-client";
 import { TEST_TOKEN_MINT, TEST_TOKEN_VAULT } from "@/lib/config";
+import { Wallet, Search, CheckCircle, AlertCircle } from "lucide-react";
 
 interface ClaimTokensProps {
   migrationAddress: string;
-  userClaimAmount: string;
-  isEligible: boolean;
 }
 
 export function ClaimTokensInterface({
   migrationAddress,
-  userClaimAmount,
-  isEligible,
 }: ClaimTokensProps) {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const { addToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [claimStep, setClaimStep] = useState<
-    "idle" | "fetching" | "generating" | "submitting" | "confirming" | "complete"
+    "idle" | "verifying" | "fetching" | "generating" | "submitting" | "confirming" | "complete"
   >("idle");
   const [claimStatus, setClaimStatus] = useState<string>("");
   const [hasUserClaimed, setHasUserClaimed] = useState<boolean | null>(null);
+  
+  // New state for original wallet address input
+  const [originalWalletAddress, setOriginalWalletAddress] = useState("");
+  const [verificationResult, setVerificationResult] = useState<{
+    verified: boolean;
+    amount?: string;
+    error?: string;
+  } | null>(null);
 
   // Check if user has already claimed
   const checkClaimed = async () => {
@@ -58,14 +63,64 @@ export function ClaimTokensInterface({
     }
   }, [publicKey, connection, migrationAddress]);
 
-  const handleClaimTokens = async () => {
-    if (!publicKey || !sendTransaction) {
-      addToast("Please connect your wallet first", "error");
+  // Verify wallet address against snapshot
+  const verifyWalletAddress = async () => {
+    if (!originalWalletAddress.trim()) {
+      addToast("Please enter your original wallet address", "error");
       return;
     }
 
-    if (!isEligible) {
-      addToast("You are not eligible to claim tokens", "error");
+    setIsLoading(true);
+    setClaimStep("verifying");
+    setClaimStatus("Verifying your holdings against snapshot...");
+
+    try {
+      const snapshotResponse = await fetch(
+        `/api/migrations/snapshot?projectId=${migrationAddress}`
+      );
+
+      if (!snapshotResponse.ok) {
+        throw new Error("Failed to fetch migration snapshot");
+      }
+
+      const snapshotData = await snapshotResponse.json();
+      const userProofData = snapshotData.claims[originalWalletAddress.toLowerCase()];
+
+      if (!userProofData) {
+        setVerificationResult({
+          verified: false,
+          error: "Address not found in snapshot. You may not have held tokens during the snapshot."
+        });
+        addToast("Address not found in snapshot", "error");
+      } else {
+        setVerificationResult({
+          verified: true,
+          amount: userProofData.amount
+        });
+        addToast(`Verified! You can claim ${userProofData.amount} tokens`, "success");
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      setVerificationResult({
+        verified: false,
+        error: "Failed to verify address. Please try again."
+      });
+      addToast("Verification failed", "error");
+    } finally {
+      setIsLoading(false);
+      setClaimStep("idle");
+      setClaimStatus("");
+    }
+  };
+
+  const handleClaimTokens = async () => {
+    if (!publicKey || !sendTransaction) {
+      addToast("Please connect your Solana wallet first", "error");
+      return;
+    }
+
+    if (!verificationResult?.verified) {
+      addToast("Please verify your original wallet address first", "error");
       return;
     }
 
@@ -92,7 +147,7 @@ export function ClaimTokensInterface({
       }
 
       const snapshotData = await snapshotResponse.json();
-      const userProofData = snapshotData.claims[publicKey.toString()];
+      const userProofData = snapshotData.claims[originalWalletAddress.toLowerCase()];
 
       if (!userProofData) {
         throw new Error("Your address is not in the snapshot. You may not be eligible.");
@@ -102,13 +157,14 @@ export function ClaimTokensInterface({
       setClaimStep("generating");
       setClaimStatus("Generating merkle proof for your wallet...");
 
-      const claims = [
-        { address: publicKey.toString(), amount: userProofData.amount },
-      ];
+      const claims = Object.entries(snapshotData.claims).map(([addr, data]: [string, any]) => ({
+        address: addr,
+        amount: data.amount,
+      }));
 
       const merkleGen = new SolanaMerkleTreeGenerator(claims);
-      const proof = merkleGen.getProof(publicKey.toString());
-      const leafIndex = merkleGen.getLeafIndex(publicKey.toString());
+      const proof = merkleGen.getProof(originalWalletAddress.toLowerCase());
+      const leafIndex = merkleGen.getLeafIndex(originalWalletAddress.toLowerCase());
 
       if (!proof || proof.length === 0) {
         throw new Error("Failed to generate merkle proof");
@@ -222,27 +278,90 @@ export function ClaimTokensInterface({
       <div className="space-y-4">
         <div>
           <h3 className="font-display text-lg font-semibold text-text-primary mb-2">
-            ✨ Claim Your Tokens
+            Claim Your Tokens
           </h3>
           <p className="text-sm text-text-secondary">
-            You are eligible to claim tokens from the migrated protocol
+            Enter your original chain wallet address to verify holdings and claim
           </p>
         </div>
 
-        {/* Claim amount */}
-        <div className="rounded-lg border border-white/8 bg-gradient-to-br from-white/2 to-transparent p-4 shadow-sm">
-          <div className="text-sm text-text-muted mb-1">Claim Amount</div>
-          <div className="text-2xl font-bold text-text-primary">
-            {userClaimAmount}
-            <span className="text-lg text-text-secondary ml-2">tokens</span>
+        {/* Step 1: Enter Original Wallet Address */}
+        <div className="rounded-lg border border-white/8 bg-black/20 p-4 space-y-3">
+          <label className="text-sm text-text-muted flex items-center gap-2">
+            <Wallet className="w-4 h-4" />
+            Original Chain Wallet Address
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={originalWalletAddress}
+              onChange={(e) => setOriginalWalletAddress(e.target.value)}
+              placeholder="0x... (Ethereum) or terra... (Terra)"
+              className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-white/30 transition-colors"
+            />
+            <button
+              onClick={verifyWalletAddress}
+              disabled={isLoading || !originalWalletAddress.trim()}
+              className="px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-text-primary hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <Search className="w-4 h-4" />
+            </button>
           </div>
+          <p className="text-xs text-text-muted">
+            Enter the address that held tokens on the original chain during the snapshot
+          </p>
         </div>
 
+        {/* Verification Result */}
+        {verificationResult && (
+          <div className={`rounded-lg p-4 border ${
+            verificationResult.verified 
+              ? "bg-green-500/10 border-green-500/30" 
+              : "bg-red-500/10 border-red-500/30"
+          }`}>
+            <div className="flex items-start gap-3">
+              {verificationResult.verified ? (
+                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              )}
+              <div>
+                <p className={`text-sm font-medium ${
+                  verificationResult.verified ? "text-green-300" : "text-red-300"
+                }`}>
+                  {verificationResult.verified ? "Address Verified!" : "Verification Failed"}
+                </p>
+                {verificationResult.verified && verificationResult.amount && (
+                  <p className="text-sm text-text-secondary mt-1">
+                    You can claim <span className="text-text-primary font-semibold">{verificationResult.amount}</span> tokens
+                  </p>
+                )}
+                {!verificationResult.verified && verificationResult.error && (
+                  <p className="text-sm text-text-secondary mt-1">
+                    {verificationResult.error}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Claim amount display */}
+        {verificationResult?.verified && (
+          <div className="rounded-lg border border-white/8 bg-gradient-to-br from-white/2 to-transparent p-4 shadow-sm">
+            <div className="text-sm text-text-muted mb-1">Claim Amount</div>
+            <div className="text-2xl font-bold text-text-primary">
+              {verificationResult.amount}
+              <span className="text-lg text-text-secondary ml-2">tokens</span>
+            </div>
+          </div>
+        )}
+
         {/* Status indicator */}
-        {isLoading && (
+        {isLoading && claimStep !== "verifying" && (
           <div className="rounded-lg border border-white/10 bg-gradient-to-br from-white/5 to-surface-light/30 p-3 space-y-2 shadow-sm">
             <div className="flex items-center gap-2">
-              <div className="animate-spin">⚙️</div>
+              <div className="animate-spin text-lg">⚙️</div>
               <span className="text-sm text-text-primary">{claimStatus}</span>
             </div>
 
@@ -263,7 +382,7 @@ export function ClaimTokensInterface({
                     <div
                       className={`w-2 h-2 rounded-full ${
                         isCompleted
-                          ? "bg-success"
+                          ? "bg-green-500"
                           : isActive
                             ? "bg-white/40 animate-pulse"
                             : "bg-white/10"
@@ -281,7 +400,7 @@ export function ClaimTokensInterface({
         {hasUserClaimed && (
           <div className="rounded-lg bg-green-500/10 p-3 border border-green-500/30">
             <p className="text-sm text-green-300">
-              ✅ You have already claimed your tokens!
+              You have already claimed your tokens!
             </p>
           </div>
         )}
@@ -289,23 +408,27 @@ export function ClaimTokensInterface({
         {/* Claim button */}
         <button
           onClick={handleClaimTokens}
-          disabled={isLoading || !publicKey || !isEligible || (hasUserClaimed === true)}
+          disabled={isLoading || !publicKey || !verificationResult?.verified || hasUserClaimed === true}
           className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 border ${
-            isLoading || !publicKey || !isEligible || (hasUserClaimed === true)
+            isLoading || !publicKey || !verificationResult?.verified || hasUserClaimed === true
               ? "border-white/10 bg-white/10 text-text-muted cursor-not-allowed"
-              : "border-success/50 bg-success/10 text-success hover:bg-success/20 hover:border-success/70 active:scale-95"
+              : "border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500/70 active:scale-95"
           }`}
         >
           {isLoading
             ? `${claimStep.toUpperCase()}...`
-            : hasUserClaimed
-              ? "Already Claimed ✓"
-              : "Claim Tokens via Anchor Program"}
+            : !publicKey
+              ? "Connect Solana Wallet First"
+              : !verificationResult?.verified
+                ? "Verify Address to Continue"
+                : hasUserClaimed
+                  ? "Already Claimed"
+                  : "Claim Tokens"}
         </button>
 
         {/* Security note */}
         <p className="text-xs text-text-secondary text-center">
-          🔐 Trustless merkle-proof based claims powered by
+          Trustless merkle-proof based claims powered by
           <br />
           Anchor program verification on Solana
         </p>

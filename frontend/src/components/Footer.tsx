@@ -1,14 +1,23 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
-    <footer className="border-t border-surface-border bg-surface/80">
+    <footer className="border-t border-white/10 bg-black/50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">💀</span>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-7 h-7 rounded-full border border-gray-500 flex items-center justify-center bg-white overflow-hidden">
+                <Image 
+                  src="/death-star.ico" 
+                  alt="NecroBridge" 
+                  width={24} 
+                  height={24}
+                  className="object-contain"
+                />
+              </div>
               <span className="font-display text-lg font-bold">
                 Necro<span className="text-primary">Bridge</span>
               </span>

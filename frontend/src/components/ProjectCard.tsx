@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { CryptoIcon } from "./CryptoIcon";
+import { Link2 } from "lucide-react";
 
 export interface Project {
   id: string;
@@ -15,81 +17,91 @@ export interface Project {
 }
 
 const STATUS_STYLES: Record<Project["status"], { bg: string; text: string; label: string }> = {
-  nominated: { bg: "bg-blue-500/10 border-blue-500/30", text: "text-blue-400", label: "Nominated" },
-  voting: { bg: "bg-purple-500/10 border-purple-500/30", text: "text-purple-400", label: "Voting" },
-  approved: { bg: "bg-green-500/10 border-green-500/30", text: "text-green-400", label: "Approved" },
-  migrating: { bg: "bg-yellow-500/10 border-yellow-500/30", text: "text-yellow-400", label: "Migrating" },
-  completed: { bg: "bg-emerald-500/10 border-emerald-500/30", text: "text-emerald-400", label: "Completed" },
+  nominated: { bg: "bg-blue-500/20", text: "text-blue-400", label: "NOMINATED" },
+  voting: { bg: "bg-purple-500/20", text: "text-purple-400", label: "VOTING" },
+  approved: { bg: "bg-green-500/20", text: "text-green-400", label: "APPROVED" },
+  migrating: { bg: "bg-yellow-500/20", text: "text-yellow-400", label: "MIGRATING" },
+  completed: { bg: "bg-emerald-500/20", text: "text-emerald-400", label: "COMPLETED" },
 };
 
 export function ProjectCard({ project }: { project: Project }) {
   const status = STATUS_STYLES[project.status];
   const votePercent = Math.min(100, Math.round((project.votes / project.votesRequired) * 100));
 
+  // Truncate name to match design (approx 18 chars)
+  const truncatedName = project.name.length > 18 
+    ? project.name.slice(0, 18) + "..." 
+    : project.name;
+
   return (
     <Link
       href={`/projects/${project.id}`}
       data-testid="project-card"
-      className="group block p-6 rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent hover:border-white/30 hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300 relative overflow-hidden"
+      className="group block rounded-2xl border border-white/10 bg-[#0d1117]/80 
+        hover:border-white/20 hover:bg-[#161b22]/90
+        transition-all duration-300 ease-out relative overflow-hidden p-5"
     >
-      {/* Decorative gradient orb */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4 relative z-10">
-        <div className="flex items-center gap-4 w-full">
-          <div className="w-14 h-14 rounded-xl border border-white/10 shadow-inner flex items-center justify-center p-2 bg-black/40 backdrop-blur-sm group-hover:border-primary/30 transition-colors">
-            <CryptoIcon ticker={project.ticker} size={32} />
-          </div>
-          <div className="flex-1 min-w-0 pr-2">
-            <h3 className="font-display font-bold text-white group-hover:text-primary transition-colors text-xl truncate">
-              {project.name}
-            </h3>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-mono font-medium text-white/50 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">${project.ticker}</span>
-              <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">{project.sourceChain}</span>
-            </div>
+      {/* Header with Icon and Title */}
+      <div className="flex items-start gap-4 mb-4">
+        {/* Rounded Square Icon */}
+        <div className="w-12 h-12 rounded-xl border border-white/10 bg-[#1c2128] flex items-center justify-center flex-shrink-0">
+          <span className="text-xs font-bold text-white/70">{project.ticker.slice(0, 3)}</span>
+        </div>
+        
+        {/* Title and Badges */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display font-bold text-white text-lg truncate mb-1.5">
+            {truncatedName}
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-white/60 bg-white/5 px-2 py-0.5 rounded">
+              ${project.ticker}
+            </span>
+            <span className="text-[10px] text-white/40 uppercase">
+              {project.sourceChain}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Status Badge moved below header for better layout */}
-      <div className="mb-5 inline-flex items-center relative z-10">
-        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-widest ${status.bg} ${status.text} shadow-sm backdrop-blur-md`}>
+      {/* Status Badge */}
+      <div className="mb-4">
+        <span className={`inline-block px-3 py-1 rounded-lg text-[11px] font-bold ${status.bg} ${status.text}`}>
           {status.label}
         </span>
       </div>
 
       {/* Description */}
-      <p className="text-sm text-white/60 line-clamp-2 mb-6 leading-relaxed relative z-10 font-medium">
+      <p className="text-sm text-white/50 leading-relaxed mb-5 line-clamp-2">
         {project.description}
       </p>
 
-      {/* Vote progress */}
-      <div className="mb-5 relative z-10 bg-black/20 p-3 rounded-xl border border-white/5">
+      {/* Votes Section */}
+      <div className="bg-[#0d1117] rounded-xl p-3 mb-4 border border-white/5">
         <div className="flex items-center justify-between text-xs mb-2">
-          <span className="text-white/50 font-medium uppercase tracking-wider text-[10px]">Votes</span>
-          <span className="text-white/80 font-mono font-semibold">{project.votes.toLocaleString()} <span className="text-white/30">/ {project.votesRequired.toLocaleString()}</span></span>
+          <span className="text-white/40 font-medium uppercase tracking-wider text-[10px]">VOTES</span>
+          <span className="text-white/80 font-mono font-semibold">
+            <span className="text-white">{project.votes}</span>
+            <span className="text-white/30"> / {project.votesRequired}</span>
+          </span>
         </div>
-        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700 ease-out rounded-full relative"
+            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
             style={{ width: `${votePercent}%` }}
-          >
-            <div className="absolute inset-0 bg-white/20 animate-pulse" />
-          </div>
+          />
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs font-medium text-white/40 pt-1 relative z-10">
-        <span className="flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-          </svg>
-          {project.sourceChain}
-        </span>
-        <span className="bg-white/5 px-2 py-1 rounded border border-white/5">TVL: <span className="text-white text-white/80">{project.tvlLocked}</span></span>
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-1.5 text-white/40">
+          <Link2 className="w-3.5 h-3.5" />
+          <span className="lowercase">{project.sourceChain}</span>
+        </div>
+        <div className="bg-white/5 px-2.5 py-1 rounded text-white/60">
+          TVL: <span className="text-white/80 font-mono">{project.tvlLocked}</span>
+        </div>
       </div>
     </Link>
   );
