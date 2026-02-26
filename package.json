@@ -12,6 +12,7 @@
     "solana:balance": "solana balance"
   },
   "devDependencies": {
-    "@coral-xyz/anchor-cli": "^0.30.0"
+    "@coral-xyz/anchor-cli": "^0.30.0",
+    "@netlify/plugin-nextjs": "^5.15.8"
   }
 }

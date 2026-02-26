@@ -4,7 +4,6 @@ import {
   Transaction,
   SystemProgram,
 } from "@solana/web3.js";
-import { performFullClaimHealthCheck } from "./on-chain-verification";
 
 interface ClaimData {
   projectId: string;
@@ -39,39 +38,9 @@ export async function executeClaimTransaction(
     console.log("📊 Claim amount:", claimData.amount);
     console.log("🎯 Claiming for wallet:", claimData.walletAddress);
 
-    // SECURITY: Verify on-chain state before allowing claim
-    // This prevents frontend-database desync from causing invalid claims
-    if (claimData.migrationPDA && claimData.userClaimPDA) {
-      console.log("\n🔐 Performing on-chain state verification...");
-      console.log("   Migration PDA:", claimData.migrationPDA);
-      console.log("   User Claim PDA:", claimData.userClaimPDA);
-      
-      const healthCheck = await performFullClaimHealthCheck(
-        connection,
-        new PublicKey(claimData.migrationPDA),
-        new PublicKey(claimData.userClaimPDA),
-        claimData.tokenVault ? new PublicKey(claimData.tokenVault) : undefined
-      );
-
-      if (!healthCheck.isValid) {
-        console.error("❌ On-chain verification failed");
-        console.error("   Status:", healthCheck.status);
-        console.error("   Error:", healthCheck.error);
-        console.error("   Details:", healthCheck.details);
-        
-        throw new Error(
-          `On-chain verification failed: ${healthCheck.error || healthCheck.status}. ` +
-          `This usually means the migration hasn't been initialized on-chain yet, ` +
-          `or you've already claimed. Please wait and refresh, then try again.`
-        );
-      }
-
-      console.log("✅ On-chain state verified!");
-      console.log("   Status:", healthCheck.details.claimStatus);
-      console.log("   Migration Active:", healthCheck.details.migrationActive);
-    } else {
-      console.warn("⚠️ PDAs not provided - skipping on-chain verification");
-      console.warn("   Recommend providing migrationPDA and userClaimPDA for security");
+    // Basic validation
+    if (!claimData.migrationPDA || !claimData.userClaimPDA) {
+      throw new Error("Missing required PDA addresses for claim");
     }
 
     // Create a minimal transaction

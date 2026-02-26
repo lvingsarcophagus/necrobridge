@@ -1,0 +1,32 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@coral-xyz/anchor-cli':
+        specifier: ^0.30.0
+        version: 0.30.1
+      '@netlify/plugin-nextjs':
+        specifier: ^5.15.8
+        version: 5.15.8
+
+packages:
+
+  '@coral-xyz/anchor-cli@0.30.1':
+    resolution: {integrity: sha512-DgRmrFp+qW0bclHNfsSm7XQE1eNfsE2BMtahOClNISXzT5PwbmQsC8laSEaADvU/FJ7Hy/e2buzuPtgMxHs6gw==}
+    hasBin: true
+
+  '@netlify/plugin-nextjs@5.15.8':
+    resolution: {integrity: sha512-zxHVtYhNV1ixLX/4xX6PFTxpM5ltfQIMXUo0JbppUWvDaYeeZIqoEmlYdfIHx6BKyjLSMm8D/b3IRReK5VYuyA==}
+    engines: {node: '>=18.0.0'}
+
+snapshots:
+
+  '@coral-xyz/anchor-cli@0.30.1': {}
+
+  '@netlify/plugin-nextjs@5.15.8': {}
