@@ -153,6 +153,8 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
         {/* Claim Tokens Interface - Trustless merkle-proof based claims */}
         <ClaimTokensInterface
           migrationAddress={project.id}
+          projectName={project.name}
+          projectTicker={project.ticker}
         />
 
         {/* Keep the old modal for now as fallback */}

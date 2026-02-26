@@ -21,7 +21,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [chainFilter, setChainFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState<Project["status"] | "all">("all");
-  const [sortBy, setSortBy] = useState<"votes" | "name">("votes");
+  const [sortBy, setSortBy] = useState<"votes" | "name">("name");
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

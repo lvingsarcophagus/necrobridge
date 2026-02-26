@@ -22,6 +22,7 @@ import {
   Wallet,
   ArrowRight
 } from "lucide-react";
+import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 
 type TabType = 'overview' | 'vote' | 'claim' | 'portfolio';
 
@@ -189,31 +190,6 @@ function UserStatCard({ label, value, icon: Icon, subtext, loading = false }: {
         </div>
       </div>
       <p className="text-xs text-text-secondary">{subtext}</p>
-    </div>
-  );
-}
-
-// Activity Item Component
-function ActivityItem({ type, project, time, value }: { type: string; project: string; time: string; value: string }) {
-  const icons = {
-    vote: Vote,
-    claim: Gem,
-    migration: Activity,
-  };
-  const Icon = icons[type as keyof typeof icons] || Activity;
-  
-  return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-white/60" />
-        </div>
-        <div>
-          <p className="text-sm text-text-primary font-medium">{project}</p>
-          <p className="text-xs text-text-muted">{time}</p>
-        </div>
-      </div>
-      <span className="text-xs font-medium text-text-secondary">{value}</span>
     </div>
   );
 }
@@ -391,23 +367,16 @@ function OverviewTab() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
+        {/* Recent Activity - Live */}
         <div className="glass rounded-2xl p-6 border border-white/10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg font-semibold text-text-primary">Recent Activity</h2>
-            <Link href="/leaderboard" className="text-sm text-primary hover:underline">View All</Link>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-xs text-text-muted">Live</span>
+            </div>
           </div>
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="w-full h-14" />)}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <ActivityItem type="vote" project="Alpha Protocol" time="2 hours ago" value="+5 power" />
-              <ActivityItem type="claim" project="Beta Finance" time="1 day ago" value="500 tokens" />
-              <ActivityItem type="migration" project="Gamma DAO" time="2 days ago" value="Completed" />
-            </div>
-          )}
+          <LiveActivityFeed showGlobal maxItems={5} />
         </div>
 
         {/* Quick Actions */}
@@ -534,18 +503,22 @@ function PortfolioTab() {
           )}
         </div>
 
-        {/* Recent Activity */}
+        {/* Your Activity - Live */}
         <div className="glass rounded-2xl p-6 border border-white/10">
-          <h2 className="font-display text-lg font-semibold text-text-primary mb-4">Your Activity</h2>
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="w-full h-14" />)}
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-lg font-semibold text-text-primary">Your Activity</h2>
+            {publicKey && (
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs text-text-muted">Live</span>
+              </div>
+            )}
+          </div>
+          {publicKey ? (
+            <LiveActivityFeed userId={publicKey.toString()} maxItems={5} />
           ) : (
-            <div className="space-y-3">
-              <ActivityItem type="vote" project="Alpha Protocol" time="2 hours ago" value="+5 power" />
-              <ActivityItem type="claim" project="Beta Finance" time="1 day ago" value="500 tokens" />
-              <ActivityItem type="migration" project="Gamma DAO" time="2 days ago" value="Completed" />
+            <div className="text-center py-8 text-text-muted">
+              <p className="text-sm">Connect wallet to see your activity</p>
             </div>
           )}
         </div>

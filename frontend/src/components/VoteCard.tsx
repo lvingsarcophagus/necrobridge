@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useSolana } from '@/hooks/useSolana';
 import { createVotingTransaction, submitVote, checkUserVote } from '@/lib/voting';
+import { trackActivity } from '@/lib/activity';
 
 interface VoteCardProps {
   projectId: string;
@@ -117,6 +118,17 @@ export function VoteCard({ projectId, projectName, ticker }: VoteCardProps) {
           setUserHasVoted(true);
           setUserVotePower(power);
           setVotingPower('');
+          
+          // Track activity
+          await trackActivity(
+            publicKey.toString(),
+            'vote',
+            projectId,
+            projectName,
+            ticker,
+            `+${power} power`,
+            { votePower: power }
+          );
           
           // Refresh vote tally
           await loadVoteTally();

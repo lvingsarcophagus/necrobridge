@@ -8,6 +8,7 @@ import { createNominationTransaction, submitNomination } from "@/lib/nominations
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { Trophy, Users, TrendingUp } from "lucide-react";
+import { trackActivity } from "@/lib/activity";
 
 const CHAINS = [
   { value: "", label: "Select source chain" },
@@ -130,6 +131,17 @@ export default function NominatePage() {
         if (result.success) {
           setSubmissionHash(signature);
           setSubmitted(true);
+          
+          // Track nomination activity
+          await trackActivity(
+            publicKey.toString(),
+            'nomination',
+            form.ticker,
+            form.projectName,
+            form.ticker,
+            'Project nominated'
+          );
+          
           // Fetch leaderboard stats for the new nomination
           await fetchLeaderboardStats(form.ticker);
         } else {

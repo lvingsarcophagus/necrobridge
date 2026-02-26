@@ -14,13 +14,18 @@ import {
 } from "@/lib/anchor-client";
 import { TEST_TOKEN_MINT, TEST_TOKEN_VAULT } from "@/lib/config";
 import { Wallet, Search, CheckCircle, AlertCircle } from "lucide-react";
+import { trackActivity } from "@/lib/activity";
 
 interface ClaimTokensProps {
   migrationAddress: string;
+  projectName: string;
+  projectTicker: string;
 }
 
 export function ClaimTokensInterface({
   migrationAddress,
+  projectName,
+  projectTicker,
 }: ClaimTokensProps) {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
@@ -242,6 +247,19 @@ export function ClaimTokensInterface({
           `✅ Claimed ${userProofData.amount} tokens! Tx: ${signature.slice(0, 8)}...`,
           "success"
         );
+
+        // Track claim activity
+        if (publicKey) {
+          await trackActivity(
+            publicKey.toString(),
+            'claim',
+            migrationAddress,
+            projectName,
+            projectTicker,
+            `${userProofData.amount} tokens`,
+            { claimAmount: userProofData.amount, txHash: signature }
+          );
+        }
       } catch (txError) {
         // Detailed error handling
         if (txError instanceof Error) {
