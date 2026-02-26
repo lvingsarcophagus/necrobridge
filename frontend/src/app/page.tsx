@@ -411,16 +411,15 @@ function TechStackSection() {
       color: "text-purple-400"
     },
     { 
-      name: "Wormhole", 
-      desc: "Cross-chain bridge", 
+      name: "Sunrise", 
+      desc: "Official revival partner", 
       icon: (
         <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 3v18M3 12h18" />
-          <circle cx="12" cy="12" r="4" />
+          <circle cx="12" cy="12" r="5" />
+          <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
         </svg>
       ),
-      color: "text-blue-400"
+      color: "text-orange-400"
     },
     { 
       name: "Merkle", 
