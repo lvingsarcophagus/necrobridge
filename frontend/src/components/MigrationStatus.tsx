@@ -243,20 +243,20 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
           <div className="animate-spin">⏳</div>
         </div>
         <p className="text-sm text-text-secondary mb-4">
-          Registering {project.name} on Sunrise (Wormhole NTT). Canonical SPL token will be created on Solana in 24-48 hours.
+          Coordinating {project.name} launch through Sunrise DeFi. Preparing for Solana market activation with real liquidity.
         </p>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs text-text-muted">
             <span>✓</span>
-            <span>Snapshot validated</span>
+            <span>Sunrise application submitted</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-text-muted">
             <span className="animate-pulse">⏳</span>
-            <span>Wormhole NTT registration pending...</span>
+            <span>Launch coordination in progress...</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-text-muted">
             <span>○</span>
-            <span>Claims opening soon</span>
+            <span>Trading activation pending</span>
           </div>
         </div>
       </div>
@@ -358,53 +358,53 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
 
         {/* Path A: Official Revival Content */}
         {migrationTab === 'canonical' && (
-          <div className="glass rounded-xl p-6 border border-accent/30 bg-gradient-to-br from-accent/5 to-transparent">
+          <div className="glass rounded-xl p-6 border border-success/30 bg-gradient-to-br from-success/5 to-transparent">
             <div className="flex items-start gap-4 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center text-accent flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center text-success flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
               <div>
                 <h4 className="font-display font-semibold text-text-primary mb-1">
-                  Official Revival Process
+                  Official Revival Process (Sunrise Model)
                 </h4>
                 <p className="text-sm text-text-secondary">
-                  This path requires coordination with the original project team.
+                  This path uses Sunrise DeFi for coordinated Solana launch with real markets from day one.
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 mb-6">
               <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
-                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center flex-shrink-0 font-medium">1</span>
+                <span className="w-6 h-6 rounded-full bg-success/20 text-success text-xs flex items-center justify-center flex-shrink-0 font-medium">1</span>
                 <div>
-                  <p className="text-sm text-text-primary font-medium">Contact Original Team</p>
-                  <p className="text-xs text-text-muted">Reach out to the original founders for approval</p>
+                  <p className="text-sm text-text-primary font-medium">Apply at Sunrise DeFi</p>
+                  <p className="text-xs text-text-muted">Submit application at sunrisedefi.com with asset details and launch timeline</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
-                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center flex-shrink-0 font-medium">2</span>
+                <span className="w-6 h-6 rounded-full bg-success/20 text-success text-xs flex items-center justify-center flex-shrink-0 font-medium">2</span>
                 <div>
-                  <p className="text-sm text-text-primary font-medium">Register on Wormhole NTT</p>
-                  <p className="text-xs text-text-muted">Create canonical SPL token representation</p>
+                  <p className="text-sm text-text-primary font-medium">Coordinate Launch Planning</p>
+                  <p className="text-xs text-text-muted">Work with Sunrise team on liquidity, marketing, and go-to-market strategy</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
-                <span className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center flex-shrink-0 font-medium">3</span>
+                <span className="w-6 h-6 rounded-full bg-success/20 text-success text-xs flex items-center justify-center flex-shrink-0 font-medium">3</span>
                 <div>
-                  <p className="text-sm text-text-primary font-medium">Holders Claim Tokens</p>
-                  <p className="text-xs text-text-muted">Original holders claim their Solana tokens</p>
+                  <p className="text-sm text-text-primary font-medium">Trading Activates</p>
+                  <p className="text-xs text-text-muted">Token launches on Solana with coordinated market formation and real liquidity</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
+            <div className="p-4 rounded-lg bg-success/5 border border-success/20">
               <p className="text-xs text-text-secondary">
-                <strong className="text-accent">Note:</strong> This path creates the "official" token on Solana. 
-                The original team maintains governance and brand rights. 
-                <a href="https://wormhole.com/docs/learn/what-is-wormhole/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline ml-1">
-                  Learn about Wormhole NTT →
+                <strong className="text-success">Note:</strong> This path creates the "official" token on Solana with immediate market depth. 
+                Sunrise handles technology, liquidity, and go-to-market coordination. 
+                <a href="https://www.sunrisedefi.com/" target="_blank" rel="noopener noreferrer" className="text-success hover:underline ml-1">
+                  Apply at Sunrise DeFi →
                 </a>
               </p>
             </div>
