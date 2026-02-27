@@ -123,7 +123,7 @@ export default function ProjectsPage() {
     );
 
     return list;
-  }, [search, chainFilter, statusFilter, sortBy]);
+  }, [allProjects, search, chainFilter, statusFilter, sortBy]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
