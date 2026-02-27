@@ -27,41 +27,43 @@ NecroBridge makes it dead-simple (pun intended) for communities to resurrect aba
 ├─────────────────────┬───────────────┬───────────────────┤
 │                     │               │                   │
 │  Frontend (Next.js) │ Solana        │  EVM/Source       │
-│  ├─ Dashboard       │  Programs     │  ├─ Attestor      │
-│  ├─ Bridge UI       │  (Anchor)     │  │  Contract      │
-│  └─ Snapshots       │  ├─ Claim     │  └─ CCIP/WHM      │
-│                     │  ├─ Govern    │     Gateway       │
+│  ├─ Dashboard       │  Programs     │  ├─ Snapshot      │
+│  ├─ Claim UI        │  (Anchor)     │  │  Data          │
+│  ├─ Voting          │  ├─ Claim     │  └─ Merkle Root   │
+│  └─ Docs            │  ├─ Govern    │                   │
 │                     │  └─ Templates │                   │
 │                     │               │                   │
 └─────────────────────┴───────────────┴───────────────────┘
-           ↓ Wormhole NTT (Sunrise) ↓
-       Canonical SPL Token Created
+           ↓ Sunrise DeFi Partnership ↓
+       Coordinated Market Formation
 ```
 
 ### Core Components
 
-1. **Token Migration Layer** (Uses Sunrise/NTT)
-   - One-click Wormhole NTT registration for issuers
-   - Auto-seed initial liquidity (Jupiter LPs)
-   - Canonical SPL token on Solana
+1. **Token Migration Layer** (Sunrise DeFi Partnership)
+   - Coordinated market formation for approved projects
+   - Liquidity provision across Solana DEXs
+   - Jupiter routing integration
+   - Real markets from day one
 
 2. **Trustless Position Claims**
-   - Source chain attestor: proves token holdings at snapshot
-   - Wormhole GenMsg: cross-chain VAA verification
-   - Solana claim program: verify → mint equivalent SPL + governance power
+   - Merkle tree snapshots of holder balances
+   - Client-side proof generation
+   - On-chain verification against stored root
+   - Direct SPL token minting to claimants
 
-3. **Protocol Templates**
-   - Yield farm starter
-   - Lending vault starter
-   - DAO/governance starter
-   - Compressed NFT starter
-   - One-command deploy
+3. **Quadratic Governance**
+   - Community voting on resurrection proposals
+   - Vote power = √(SOL staked) to prevent whale dominance
+   - 50 wallet minimum + 80% approval threshold
+   - On-chain vote recording and tallying
 
 4. **Resurrection Dashboard**
-   - Anyone can nominate dead protocols
-   - On-chain voting (Marinade SDKs or governance)
-   - Auto-generates migration instructions
-   - Snapshot management & verification
+   - Wallet-gated personalized overview
+   - Project nomination interface
+   - Real-time voting with live activity feeds
+   - Token claim interface with address verification
+   - Leaderboard with trending projects
 
 ---
 
@@ -170,31 +172,54 @@ NecroBridge makes it dead-simple (pun intended) for communities to resurrect aba
 
 ---
 
-## 🌉 Wormhole NTT Integration (Feb 14 – COMPLETE!)
+## 🌉 Sunrise DeFi Integration (Official Revival Partner)
 
-We've implemented **full Wormhole Native Token Transfers (Sunrise)** support for trustless cross-chain token resurrection.
+We partnered with **Sunrise DeFi** (sunrisedefi.com) as our official revival path for coordinated market formation. This replaced the generic Wormhole NTT approach with a proven resurrection model.
 
-### 4-Step Trustless Flow
+### Why Sunrise?
+
+Sunrise demonstrated real success with the MON token launch:
+- $69M traded in first 24 hours on Solana
+- ~60% of Uniswap volume
+- Top 5 global venue ranking
+
+They provide coordinated liquidity, go-to-market strategy, and trading activation across Solana DEXs.
+
+### Two-Path Migration System
+
+**Path A: Official Revival (Sunrise Model)**
+- Original team coordinates through Sunrise
+- Preserves brand and governance
+- Real markets from day one
+- Higher success rate
+
+**Path B: Community Fork**
+- For abandoned projects (unreachable teams)
+- Community takes full ownership
+- No team coordination needed
+- Truly decentralized
+
+### 4-Step Trustless Claim Flow
 
 ```
-Step 1: Register Token with NTT
-├─ Create canonical SPL representation
+Step 1: Snapshot & Registration
+├─ Capture holder balances at specific block
 ├─ Generate merkle tree from snapshot
-└─ Create Wormhole VAA proof
+└─ Store root hash on Solana
 
 Step 2: Generate User Merkle Proof
 ├─ Prove user held X tokens at block N
-├─ Generate proof path (256 hashes verified)
+├─ Generate proof path (client-side)
 └─ No trust in us—only math
 
-Step 3: Verify VAA + Merkle
-├─ On-chain: Wormhole guardians signed VAA ✓
-├─ On-chain: User proof path checks out ✓
-└─ On-chain: User hasn't already claimed ✓
+Step 3: Verify Proof On-Chain
+├─ User submits claim with proof
+├─ Program verifies against stored root
+└─ Checks user hasn't already claimed
 
 Step 4: Mint SPL Tokens
-├─ User gets equivalent SPL amount
-├─ Governance power = original balance
+├─ User receives equivalent SPL amount
+├─ Standard token compatible with all DEXs
 └─ Mission accomplished!
 ```
 
@@ -705,12 +730,23 @@ We've implemented a **complete real-world cross-chain bridge** connecting Ethere
 * **Feb 16** ✅ **Navigation Update & Comprehensive Docs**
   - [x] Remove "Get Started" button from Header
   - [x] Add "Docs" link to main navigation
-  - [x] Create comprehensive docs page (353 lines)
+  - [x] Create comprehensive docs page
   - [x] Document all features in-depth (Overview, Getting Started, Features, How It Works)
   - [x] Create Dashboard, Nomination, Voting, Claims sections
-  - [x] Build FAQ with 6 common questions
+  - [x] Build FAQ with 10 common questions
   - [x] Add table of contents with anchor links
   - [x] Dev server running with full content ✅
+
+* **Feb 25-26** ✅ **Docs Enhancement & Filter Fix**
+  - [x] Removed judge-focused Demo Guide from docs
+  - [x] Added comprehensive User Manual section with step-by-step guides
+  - [x] Added Economics section (revenue streams, tokenomics, fee structure)
+  - [x] Added Security section (smart contract security, operational security, incident response)
+  - [x] Added API Reference section (endpoints, auth, error codes)
+  - [x] Expanded FAQ from 4 to 10 questions with detailed answers
+  - [x] Fixed browse projects filter (added allProjects to useMemo dependencies)
+  - [x] Created comprehensive NECROBRIDGE_GUIDE.md (60+ pages)
+  - [x] Production build passing ✅
 
 **Achievement Summary - Complete Theme + Aesthetic + Documentation:**
 - ✅ 12+ components with consistent design system tokens

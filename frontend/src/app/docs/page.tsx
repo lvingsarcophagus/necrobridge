@@ -10,7 +10,6 @@ import {
   Settings, 
   Gem, 
   FileCode, 
-  Video, 
   HelpCircle,
   LayoutDashboard,
   Search,
@@ -280,9 +279,9 @@ ADVANTAGES:
     subsections: [
       {
         title: 'Migration Manager Program',
-        content: 'The core program that handles:\n- Migration initialization and lifecycle\n- Snapshot Merkle root storage\n- Claim verification and token distribution\n- DAO treasury management\n- Emergency pause functionality\n\nProgram ID: necromigrateXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-Deployed: Solana Devnet (Mainnet pending audit)
-Source: Verified on GitHub'
+//         content: 'The core program that handles:\n- Migration initialization and lifecycle\n- Snapshot Merkle root storage\n- Claim verification and token distribution\n- DAO treasury management\n- Emergency pause functionality\n\nProgram ID: necromigrateXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// Deployed: Solana Devnet (Mainnet pending audit)
+// Source: Verified on GitHub'
       },
       {
         title: 'Governance Program',
@@ -382,14 +381,7 @@ Source: Verified on GitHub'
     subsections: [
       {
         title: 'What fees do I pay?',
-        content: `Transaction Fees: ~$0.00025 per claim (Solana's cost)
-
-Platform Fee: 2% of LP reserves (optional DAO governance vote)
-- Funds development
-- Pays DAO multisig signers
-- Voted on by community
-
-No hidden fees. No founder allocation.`
+        content: 'Transaction Fees: ~$0.00025 per claim (Solana cost)\n\nPlatform Fee: 2% of LP reserves (optional DAO governance vote)\n- Funds development\n- Pays DAO multisig signers\n- Voted on by community\n\nNo hidden fees. No founder allocation.'
       },
       {
         title: 'Can the team veto a community vote?',
