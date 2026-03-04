@@ -2,12 +2,11 @@
 
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { MOCK_PROJECTS } from "@/lib/mock-data";
 import { VoteCard } from "@/components/VoteCard";
 import { MigrationStatus } from "@/components/MigrationStatus";
 import type { Project } from "@/components/ProjectCard";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 
 const STATUS_STYLES: Record<Project["status"], { bg: string; text: string; label: string }> = {
   nominated: { bg: "bg-warning/10", text: "text-warning", label: "Nominated" },
@@ -44,19 +43,12 @@ export default function ProjectDetailPage({
   const { id } = use(params);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<{ time: string; text: string }[]>([]);
 
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        // First check mock projects
-        const mockProject = MOCK_PROJECTS.find((p) => p.id === id);
-        if (mockProject) {
-          setProject(mockProject);
-          setLoading(false);
-          return;
-        }
-
-        // Then check nominations (by nomination ID or ticker)
+        // Fetch from Firestore nominations
         const nominationsRef = collection(db, "nominations");
         
         // Try finding by ID first
@@ -111,6 +103,32 @@ export default function ProjectDetailPage({
           };
           
           setProject(projectData);
+
+          // Fetch real activity from Firestore
+          try {
+            const activityRef = collection(db, "activity");
+            const activityQuery = query(
+              activityRef,
+              where("ticker", "==", data.ticker),
+              orderBy("timestamp", "desc"),
+              limit(5)
+            );
+            const activitySnap = await getDocs(activityQuery);
+            const activities = activitySnap.docs.map((doc) => {
+              const a = doc.data();
+              const ts = a.timestamp?.toDate ? a.timestamp.toDate() : new Date();
+              const diff = Date.now() - ts.getTime();
+              const mins = Math.floor(diff / 60000);
+              const hours = Math.floor(mins / 60);
+              const days = Math.floor(hours / 24);
+              const timeStr =
+                days > 0 ? `${days}d ago` : hours > 0 ? `${hours}h ago` : `${mins}m ago`;
+              return { time: timeStr, text: a.description || a.type };
+            });
+            setRecentActivity(activities);
+          } catch {
+            // activity is optional
+          }
         }
         
         setLoading(false);
@@ -204,7 +222,7 @@ export default function ProjectDetailPage({
               <div className="bg-surface-lighter rounded-lg p-3">
                 <p className="text-xs text-text-muted mb-1">Contract</p>
                 <p className="font-mono text-xs text-text-secondary truncate">
-                  0x7a25...f3e8
+                  {project.id}
                 </p>
               </div>
             </div>
@@ -267,29 +285,29 @@ export default function ProjectDetailPage({
           {/* Migration Status CTA */}
           <MigrationStatus project={project} votePercent={votePercent} />
 
-          {/* Activity / Timeline (placeholder) */}
+          {/* Activity / Timeline */}
           <div className="glass rounded-xl p-6">
             <h2 className="font-display text-lg font-semibold mb-4">
               Activity
             </h2>
-            <div className="space-y-4">
-              {[
-                { time: "2 hours ago", text: "Snapshot validated — 14,320 holder addresses verified" },
-                { time: "1 day ago", text: "Community vote reached 84% quorum" },
-                { time: "3 days ago", text: "Project nominated by community member" },
-              ].map((event, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                    {i < 2 && <div className="w-px flex-1 bg-surface-lighter mt-1" />}
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-text-muted text-center py-4">No activity yet — be the first to vote!</p>
+            ) : (
+              <div className="space-y-4">
+                {recentActivity.map((event, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+                      {i < recentActivity.length - 1 && <div className="w-px flex-1 bg-surface-lighter mt-1" />}
+                    </div>
+                    <div className="pb-4">
+                      <p className="text-sm text-text-primary">{event.text}</p>
+                      <p className="text-xs text-text-muted mt-0.5">{event.time}</p>
+                    </div>
                   </div>
-                  <div className="pb-4">
-                    <p className="text-sm text-text-primary">{event.text}</p>
-                    <p className="text-xs text-text-muted mt-0.5">{event.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -304,36 +322,41 @@ export default function ProjectDetailPage({
 
           {/* Quick stats */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-display font-semibold mb-4">Key Metrics</h3>
+            <h3 className="font-display font-semibold mb-4">Details</h3>
             <div className="space-y-3">
-              {[
-                { label: "Total Supply", value: "1.2B tokens" },
-                { label: "Holders", value: "14,320" },
-                { label: "Avg Claim", value: "84,021 tokens" },
-                { label: "Migration Fee", value: "0.1%" },
-              ].map((metric) => (
-                <div key={metric.label} className="flex justify-between items-center">
-                  <span className="text-sm text-text-muted">{metric.label}</span>
-                  <span className="text-sm font-mono text-text-primary">{metric.value}</span>
-                </div>
-              ))}
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-muted">Source Chain</span>
+                <span className="text-sm font-mono text-text-primary">{project.sourceChain}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-muted">Status</span>
+                <span className={`text-sm font-medium ${STATUS_STYLES[project.status].text}`}>{STATUS_STYLES[project.status].label}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-muted">Votes Required</span>
+                <span className="text-sm font-mono text-text-primary">{project.votesRequired} SOL</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-muted">Migration Path</span>
+                <span className="text-sm font-mono text-text-primary">Community Vote</span>
+              </div>
             </div>
           </div>
 
           {/* Contract info */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-display font-semibold mb-4">Contracts</h3>
+            <h3 className="font-display font-semibold mb-4">Contract</h3>
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-text-muted mb-1">Source ({project.sourceChain})</p>
                 <p className="font-mono text-xs text-text-secondary bg-surface-lighter rounded px-2 py-1.5 truncate">
-                  0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+                  Not yet verified
                 </p>
               </div>
               <div>
                 <p className="text-xs text-text-muted mb-1">Solana SPL Mint</p>
                 <p className="font-mono text-xs text-text-secondary bg-surface-lighter rounded px-2 py-1.5 truncate">
-                  NcBr...7xKq
+                  Pending migration approval
                 </p>
               </div>
             </div>

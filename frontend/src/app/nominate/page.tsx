@@ -33,7 +33,9 @@ export default function NominatePage() {
     contractAddress: "",
     reason: "",
     website: "",
+    migrationPath: "official" as "official" | "community",
   });
+  const [showPathBDisclaimer, setShowPathBDisclaimer] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionHash, setSubmissionHash] = useState("");
@@ -256,6 +258,7 @@ export default function NominatePage() {
                     contractAddress: "",
                     reason: "",
                     website: "",
+                    migrationPath: "official",
                   });
                 }}
                 className="px-5 py-2.5 rounded-lg border border-white/10 text-text-secondary hover:text-text-primary hover:bg-white/5 text-sm transition-colors"
@@ -313,6 +316,87 @@ export default function NominatePage() {
           )}
         </div>
 
+        {/* Migration Path Selection */}
+        <div className="glass rounded-xl p-6 space-y-4">
+          <h2 className="font-display text-lg font-semibold">Migration Path</h2>
+          <p className="text-sm text-text-muted">
+            Choose how this project will be resurrected on Solana.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Path A: Official Revival */}
+            <button
+              type="button"
+              onClick={() => {
+                update("migrationPath", "official");
+                setShowPathBDisclaimer(false);
+              }}
+              className={`p-4 rounded-xl border text-left transition-all ${
+                form.migrationPath === "official"
+                  ? "border-success/50 bg-success/10"
+                  : "border-white/10 hover:border-white/20"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  form.migrationPath === "official" ? "border-success" : "border-white/30"
+                }`}>
+                  {form.migrationPath === "official" && <div className="w-2 h-2 rounded-full bg-success" />}
+                </div>
+                <span className="font-medium text-text-primary">Official Revival</span>
+              </div>
+              <p className="text-xs text-text-muted">
+                Original team coordinates through Sunrise DeFi. Preserves brand and governance.
+              </p>
+            </button>
+
+            {/* Path B: Community Fork */}
+            <button
+              type="button"
+              onClick={() => {
+                update("migrationPath", "community");
+                setShowPathBDisclaimer(true);
+              }}
+              className={`p-4 rounded-xl border text-left transition-all ${
+                form.migrationPath === "community"
+                  ? "border-warning/50 bg-warning/10"
+                  : "border-white/10 hover:border-white/20"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  form.migrationPath === "community" ? "border-warning" : "border-white/30"
+                }`}>
+                  {form.migrationPath === "community" && <div className="w-2 h-2 rounded-full bg-warning" />}
+                </div>
+                <span className="font-medium text-text-primary">Community Fork</span>
+              </div>
+              <p className="text-xs text-text-muted">
+                Community takes full ownership. No team coordination needed. V2 branding required.
+              </p>
+            </button>
+          </div>
+
+          {/* Path B Disclaimer */}
+          {showPathBDisclaimer && (
+            <div className="p-4 rounded-lg bg-warning/10 border border-warning/30">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-warning shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-warning mb-1">Community Fork Disclaimer</p>
+                  <p className="text-xs text-text-secondary">
+                    Community-led revivals are not affiliated with original projects. 
+                    You MUST use V2/fork branding to avoid legal issues. If original founders 
+                    resurface, they may challenge the fork. Proceed with caution.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="glass rounded-xl p-6 space-y-5">
           <h2 className="font-display text-lg font-semibold">Project Details</h2>
 
@@ -320,12 +404,15 @@ export default function NominatePage() {
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1.5">
               Project Name <span className="text-danger">*</span>
+              {form.migrationPath === "community" && (
+                <span className="text-warning text-xs ml-2">(Use V2 suffix, e.g., "Terra V2")</span>
+              )}
             </label>
             <input
               type="text"
               value={form.projectName}
               onChange={(e) => update("projectName", e.target.value)}
-              placeholder="e.g. Terra Luna Classic"
+              placeholder={form.migrationPath === "community" ? "e.g. Terra V2" : "e.g. Terra Luna Classic"}
               className="w-full px-4 py-2.5 rounded-lg bg-surface-lighter border border-surface-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/40"
             />
           </div>
@@ -334,15 +421,30 @@ export default function NominatePage() {
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1.5">
               Token Ticker <span className="text-danger">*</span>
+              {form.migrationPath === "community" && (
+                <span className="text-warning text-xs ml-2">(Use V2 suffix, e.g., "LUNC2")</span>
+              )}
             </label>
             <input
               type="text"
               value={form.ticker}
-              onChange={(e) => update("ticker", e.target.value.toUpperCase())}
-              placeholder="e.g. LUNC"
+              onChange={(e) => {
+                const value = e.target.value.toUpperCase();
+                update("ticker", value);
+                // Auto-suggest V2 suffix for community path
+                if (form.migrationPath === "community" && value.length > 0 && !value.includes("2")) {
+                  // Don't auto-append, just show hint
+                }
+              }}
+              placeholder={form.migrationPath === "community" ? "e.g. LUNC2" : "e.g. LUNC"}
               maxLength={10}
               className="w-full px-4 py-2.5 rounded-lg bg-surface-lighter border border-surface-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary/40 font-mono"
             />
+            {form.migrationPath === "community" && form.ticker && !form.ticker.includes("2") && (
+              <p className="text-xs text-warning mt-1.5">
+                Tip: Consider adding &quot;2&quot; or &quot;V2&quot; to distinguish from original token
+              </p>
+            )}
           </div>
 
           {/* Source Chain */}

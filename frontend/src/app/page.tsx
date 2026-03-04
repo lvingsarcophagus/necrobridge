@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { ProjectCard } from "@/components/ProjectCard";
 import { StatsCard } from "@/components/StatsCard";
 import { MigrationPathsSection } from "@/components/MigrationPathsSection";
-import { PLATFORM_STATS } from "@/lib/mock-data";
+import { db } from "@/lib/firebase";
+import { collection, getCountFromServer, getDocs, query, orderBy, limit } from "firebase/firestore";
+import type { Project } from "@/components/ProjectCard";
 
 // Space-themed decorative elements
 function StarField() {
@@ -259,13 +262,36 @@ function HowItWorksSection() {
 }
 
 function StatsSection() {
+  const [stats, setStats] = useState({
+    projectsNominated: 0,
+    activeVotes: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [nominationsSnap, talliesSnap] = await Promise.all([
+          getCountFromServer(collection(db, "nominations")),
+          getDocs(collection(db, "voteTallies")),
+        ]);
+        setStats({
+          projectsNominated: nominationsSnap.data().count,
+          activeVotes: talliesSnap.size,
+        });
+      } catch {
+        // silently fail — stats are non-critical
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <section className="py-16 border-y border-white/5 bg-gradient-to-b from-black/50 to-transparent">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
-            label="Projects Migrated"
-            value={PLATFORM_STATS.projectsMigrated.toString()}
+            label="Projects Nominated"
+            value={stats.projectsNominated > 0 ? stats.projectsNominated.toString() : "—"}
             delay={0}
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -274,18 +300,18 @@ function StatsSection() {
             }
           />
           <StatsCard
-            label="Value Rescued"
-            value={PLATFORM_STATS.totalValueRescued}
+            label="Chain Support"
+            value="8"
             delay={100}
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             }
           />
           <StatsCard
             label="Active Votes"
-            value={PLATFORM_STATS.activeVotes.toString()}
+            value={stats.activeVotes > 0 ? stats.activeVotes.toString() : "—"}
             delay={200}
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -294,12 +320,12 @@ function StatsSection() {
             }
           />
           <StatsCard
-            label="Unique Holders"
-            value={PLATFORM_STATS.uniqueHolders}
+            label="Voting Threshold"
+            value="80%"
             delay={300}
             icon={
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
           />
@@ -308,11 +334,6 @@ function StatsSection() {
     </section>
   );
 }
-
-import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
-import type { Project } from "@/components/ProjectCard";
 
 function FeaturedProjectsSection() {
   const [featured, setFeatured] = useState<Project[]>([]);

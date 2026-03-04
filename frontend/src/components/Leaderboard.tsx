@@ -69,16 +69,21 @@ export function Leaderboard() {
         
         snapshot.forEach((doc) => {
           const data = doc.data();
-          nominations.set(data.ticker, {
-            id: data.ticker,
+          const projectId = data.id || data.ticker;
+          
+          nominations.set(projectId, {
+            id: projectId,
             name: data.projectName,
             ticker: data.ticker,
             sourceChain: data.sourceChain,
-            status: "nominated",
+            status: data.status || "nominated",
           });
           
-          // Count by chain
-          const chain = data.sourceChain?.toLowerCase() || 'unknown';
+          // Count by chain - ensure sourceChain is a string
+          const sourceChain = data.sourceChain;
+          const chain = typeof sourceChain === 'string' 
+            ? sourceChain.toLowerCase() 
+            : 'unknown';
           chains[chain] = (chains[chain] || 0) + 1;
         });
 
@@ -114,9 +119,20 @@ export function Leaderboard() {
             const project = projectsMap.get(projectId);
             const yesPercent = tally.total > 0 ? Math.round((tally.yes / tally.total) * 100) : 0;
             
-            // Simulate recent activity (in real app, this would come from timestamp data)
-            const recentVotes = Math.floor(Math.random() * 20);
-            const isHot = recentVotes > 10 || yesPercent > 75;
+            // Determine if project is "hot" based on approval percentage
+            const isHot = yesPercent >= 75;
+            
+            // Calculate status based on votes
+            const uniqueWallets = tally.uniqueWallets || 0;
+            const hasMinimumWallets = uniqueWallets >= 50;
+            const isApproved = yesPercent >= 80 && hasMinimumWallets;
+            
+            let status = project?.status || 'nominated';
+            if (isApproved && status === 'nominated') {
+              status = 'approved';
+            } else if (uniqueWallets > 0 && status === 'nominated') {
+              status = 'voting';
+            }
 
             return {
               id: projectId,
@@ -126,12 +142,12 @@ export function Leaderboard() {
               no: tally.no || 0,
               total: tally.total || 0,
               yesPercent,
-              status: project?.status || 'unknown',
+              status,
               chain: project?.sourceChain || 'unknown',
               rank: index + 1,
-              recentVotes,
               isHot,
-              lastVoteTime: recentVotes > 0 ? 'Just now' : '2h ago',
+              uniqueWallets,
+              lastUpdated: tally.lastUpdated || new Date().toISOString(),
             };
           })
           .sort((a, b) => b.total - a.total);
@@ -348,18 +364,23 @@ export function Leaderboard() {
                       {/* Recent Activity */}
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2 text-xs">
-                          {project.recentVotes > 0 ? (
+                          {project.uniqueWallets > 0 ? (
                             <>
                               <Activity className="w-3.5 h-3.5 text-green-400" />
                               <span className="text-green-400 font-medium">
-                                +{project.recentVotes} votes
+                                {project.uniqueWallets} wallets
                               </span>
                               <span className="text-white/30">•</span>
                               <Clock className="w-3 h-3 text-white/40" />
-                              <span className="text-white/50">{project.lastVoteTime}</span>
+                              <span className="text-white/50">
+                                {new Date(project.lastUpdated).toLocaleTimeString([], { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </span>
                             </>
                           ) : (
-                            <span className="text-white/30">No recent activity</span>
+                            <span className="text-white/30">No votes yet</span>
                           )}
                         </div>
                       </td>

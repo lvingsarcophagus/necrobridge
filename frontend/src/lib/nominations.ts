@@ -10,6 +10,7 @@ export interface NominationData {
   contractAddress: string;
   reason: string;
   website?: string;
+  migrationPath?: "official" | "community";
 }
 
 /**
@@ -70,6 +71,7 @@ export async function submitNomination(
         contractAddress: data.contractAddress,
         reason: data.reason,
         website: data.website,
+        migrationPath: data.migrationPath || "official",
         transactionSignature,
         timestamp: new Date().toISOString(),
       }),

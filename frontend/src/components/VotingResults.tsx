@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MOCK_PROJECTS } from '@/lib/mock-data';
 
 interface ProjectWithVotes {
   id: string;
@@ -32,15 +31,14 @@ export function VotingResults() {
       
       const data = await response.json();
       
-      // Combine API tallies with mock project data
+      // Combine API tallies with project data
       const tallies = data.data || {};
       const enriched: ProjectWithVotes[] = Object.entries(tallies)
         .map(([projectId, tally]: [string, any]) => {
-          const project = MOCK_PROJECTS.find(p => p.id === projectId);
           return {
             id: projectId,
-            name: project?.name || projectId,
-            ticker: project?.ticker || 'N/A',
+            name: projectId, // will show ticker as name; real name fetched when user visits the page
+            ticker: projectId,
             yes: tally.yes || 0,
             no: tally.no || 0,
             total: tally.total || 0,

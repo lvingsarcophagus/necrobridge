@@ -721,14 +721,13 @@ export function MigrationStatus({ project, votePercent }: MigrationStatusProps) 
 
   if (project.status === 'voting') {
     const remainingVotes = project.votesRequired - project.votes;
-    const daysLeft = Math.ceil(Math.random() * 5) + 2; // Mock days remaining
     return (
       <div className="glass rounded-xl p-6 border-2 border-primary/30 bg-primary/5">
         <div className="flex items-start justify-between mb-4">
           <h3 className="font-display text-lg font-semibold text-primary">
             🗳️ Community Vote in Progress
           </h3>
-          <span className="font-mono text-xs text-primary font-semibold">{daysLeft}d left</span>
+          <span className="font-mono text-xs text-text-muted">Vote now to decide</span>
         </div>
 
         <div className="mb-4">
